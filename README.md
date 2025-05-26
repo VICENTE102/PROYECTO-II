@@ -32,9 +32,9 @@ Este repositorio contiene el desarrollo completo del proyecto realizado en la as
 │
 ├── data/                      # Conjunto de datos finales utilizados
 │   ├── generacion_todas_comunidades.csv
-│   ├── clima_coruna.csv
+│   ├── generation.zip         # zip con todos los csv por comunidad
 │   ├── clima_leon.csv
-│   └── ...                     # Otros datasets limpios
+│   └── ...                    # Otros datasets limpios
 │
 ├── docs/                      # Informes, memoria final y anexos HTML
 │   ├── memoria_final.docx
