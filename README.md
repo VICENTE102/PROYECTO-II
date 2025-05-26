@@ -21,11 +21,11 @@ Este repositorio contiene el desarrollo completo del proyecto realizado en la as
 📦 root
 ├── hito_1/                     # Fichas y fuentes analizadas (Hito 1)
 ├── hito_2/                     # Procesamiento y transformación de datos (Hito 2)
-│   ├── clima/                  # Códigos y datos relacionados con AEMET
-│   └── energia/                # Códigos y datos relacionados con REE
+│   ├── ....pdf       # Códigos y datos relacionados con AEMET
+│   └── ....html              # Códigos y datos relacionados con REE
 │
 ├── objetivos/                 # Desarrollo de los objetivos individuales
-│   ├── objetivo_1_pablo/       # Relación clima ↔ energía hidráulica
+│   ├── objetivo_1_miguel/       # Relación clima ↔ energía hidráulica
 │   ├── objetivo_2_nombre/      # Objetivo 2
 │   ├── objetivo_3_nombre/      # Objetivo 3
 │   └── ...                     # Resto de objetivos
