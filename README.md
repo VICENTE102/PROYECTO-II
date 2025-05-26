@@ -4,6 +4,14 @@ Este repositorio contiene el desarrollo completo del proyecto realizado en la as
 
 ---
 
+# Autores
+
+- Víctor Lorenzo López
+- Marc Fernández Cortina
+- Pablo Alpuente Tabasco
+- Vicente Ricós Caras
+- José Miguel García Ríos
+
 ## 🧭 Estructura del repositorio
 
 ```text
@@ -86,6 +94,25 @@ La memoria final y todos los anexos generados en RMarkdown compilado a HTML est�
 ## 👩‍🏫 Evaluación técnica
 
 Cada objetivo está diseñado para ser defendido individualmente por cada alumno. El código está documentado con comentarios y estructurado para facilitar su exposición en la defensa técnica final.
+
+Durante la evaluación técnica, se podrá mostrar y explicar:
+
+- El **flujo completo del análisis**: desde la limpieza de datos brutos hasta la obtención de los resultados.
+- La **descarga y transformación** de datos desde la API de AEMET en formato JSON y su tratamiento para convertirlo en CSV limpio.
+- El uso de **paquetes clave** en R como `dplyr`, `ggplot2`, `tidyr`, `corrplot`, `plotly` o `lubridate`, y su aplicación contextualizada en cada parte del análisis.
+- La aplicación y justificación de técnicas como:
+  - Análisis exploratorio y visualizaciones descriptivas.
+  - Transformación de variables (escalado, creación de variables categóricas como estación del año…).
+  - Cálculo de **correlaciones no paramétricas (Spearman)** por ser más robustas ante no linealidad y distribuciones no normales.
+  - Ajuste de modelos de **regresión lineal y polinómica** para evaluar relaciones funcionales entre variables.
+  - Comparación entre modelos con métricas como el **R² ajustado**.
+  - Análisis estacional mediante **boxplots por estación climática**.
+- La toma de decisiones fundamentadas (por ejemplo, descartar ciertas variables o cambiar de estación meteorológica en función de la disponibilidad y calidad del dato).
+- Las **limitaciones identificadas** en cada objetivo y la forma en que han sido abordadas (como la inercia hídrica, gestión de embalses o comportamiento no inmediato de la lluvia sobre la generación energética).
+- Las justificaciones metodológicas del **workflow seguido**, explicando por qué se ha utilizado cada técnica y qué aporta al objetivo final.
+
+Los scripts están compilados en HTML como anexos (`docs/`) para facilitar su consulta durante la defensa. Cada estudiante deberá estar preparado para explicar su parte del código, ejecutar una parte del análisis y razonar las conclusiones obtenidas a partir de los gráficos y modelos generados.
+
 
 ---
 
