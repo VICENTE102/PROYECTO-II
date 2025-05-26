@@ -1,0 +1,337 @@
+variable,comunidad,fecha,valor
+Hidráulica,aragon,2023-01-01,138223.339
+Hidráulica,aragon,2023-02-01,144140.23
+Hidráulica,aragon,2023-03-01,196557.201
+Hidráulica,aragon,2023-04-01,182705.969
+Hidráulica,aragon,2023-05-01,173256.103
+Hidráulica,aragon,2023-06-01,247530.64
+Hidráulica,aragon,2023-07-01,188518.524
+Hidráulica,aragon,2023-08-01,129129.092
+Hidráulica,aragon,2023-09-01,121116.061
+Hidráulica,aragon,2023-10-01,157271.038
+Hidráulica,aragon,2023-11-01,279754.205
+Hidráulica,aragon,2023-12-01,352917.856
+Hidráulica,aragon,2024-01-01,253948.583
+Hidráulica,aragon,2024-02-01,216570.455
+Hidráulica,aragon,2024-03-01,414580.538
+Hidráulica,aragon,2024-04-01,414788.598
+Hidráulica,aragon,2024-05-01,372989.858
+Hidráulica,aragon,2024-06-01,358034.757
+Hidráulica,aragon,2024-07-01,267296.992
+Hidráulica,aragon,2024-08-01,182676.946
+Hidráulica,aragon,2024-09-01,247572.743
+Hidráulica,aragon,2024-10-01,397927.049
+Hidráulica,aragon,2024-11-01,371000.629
+Hidráulica,aragon,2024-12-01,309806.729
+Eólica,aragon,2023-01-01,1614538.718
+Eólica,aragon,2023-02-01,647693.224
+Eólica,aragon,2023-03-01,1156474.321
+Eólica,aragon,2023-04-01,1006824.51
+Eólica,aragon,2023-05-01,1369951.229
+Eólica,aragon,2023-06-01,651484.063
+Eólica,aragon,2023-07-01,874266.144
+Eólica,aragon,2023-08-01,942736.263
+Eólica,aragon,2023-09-01,479995.212
+Eólica,aragon,2023-10-01,753966.96
+Eólica,aragon,2023-11-01,1351550.71
+Eólica,aragon,2023-12-01,1157859.786
+Eólica,aragon,2024-01-01,939643.313
+Eólica,aragon,2024-02-01,1377727.268
+Eólica,aragon,2024-03-01,1020792.461
+Eólica,aragon,2024-04-01,1023185.71
+Eólica,aragon,2024-05-01,774474.747
+Eólica,aragon,2024-06-01,934014.75
+Eólica,aragon,2024-07-01,886552.412
+Eólica,aragon,2024-08-01,795170.581
+Eólica,aragon,2024-09-01,909168.939
+Eólica,aragon,2024-10-01,777809.267
+Eólica,aragon,2024-11-01,757848.148
+Eólica,aragon,2024-12-01,1261691.656
+Solar fotovoltaica,aragon,2023-01-01,142219.179
+Solar fotovoltaica,aragon,2023-02-01,206100.924
+Solar fotovoltaica,aragon,2023-03-01,312663.144
+Solar fotovoltaica,aragon,2023-04-01,383961.203
+Solar fotovoltaica,aragon,2023-05-01,425807.079
+Solar fotovoltaica,aragon,2023-06-01,400048.56
+Solar fotovoltaica,aragon,2023-07-01,514099.227
+Solar fotovoltaica,aragon,2023-08-01,456392.554
+Solar fotovoltaica,aragon,2023-09-01,344852.974
+Solar fotovoltaica,aragon,2023-10-01,268814.647
+Solar fotovoltaica,aragon,2023-11-01,208580.35
+Solar fotovoltaica,aragon,2023-12-01,182697.33
+Solar fotovoltaica,aragon,2024-01-01,166676.594
+Solar fotovoltaica,aragon,2024-02-01,240867.572
+Solar fotovoltaica,aragon,2024-03-01,330502.783
+Solar fotovoltaica,aragon,2024-04-01,373371.091
+Solar fotovoltaica,aragon,2024-05-01,496318.845
+Solar fotovoltaica,aragon,2024-06-01,491775.509
+Solar fotovoltaica,aragon,2024-07-01,571539.318
+Solar fotovoltaica,aragon,2024-08-01,512064.78
+Solar fotovoltaica,aragon,2024-09-01,371445.864
+Solar fotovoltaica,aragon,2024-10-01,239266.376
+Solar fotovoltaica,aragon,2024-11-01,181348.945
+Solar fotovoltaica,aragon,2024-12-01,164685.806
+Otras renovables,aragon,2023-01-01,3381.997
+Otras renovables,aragon,2023-02-01,3890.325
+Otras renovables,aragon,2023-03-01,4304.277
+Otras renovables,aragon,2023-04-01,3876.493
+Otras renovables,aragon,2023-05-01,4282.371
+Otras renovables,aragon,2023-06-01,4627.359
+Otras renovables,aragon,2023-07-01,4405.067
+Otras renovables,aragon,2023-08-01,2595.931
+Otras renovables,aragon,2023-09-01,2363.777
+Otras renovables,aragon,2023-10-01,2385.103
+Otras renovables,aragon,2023-11-01,2056.017
+Otras renovables,aragon,2023-12-01,1911.104
+Otras renovables,aragon,2024-01-01,1941.765
+Otras renovables,aragon,2024-02-01,2757.384
+Otras renovables,aragon,2024-03-01,2502.725
+Otras renovables,aragon,2024-04-01,2172.614
+Otras renovables,aragon,2024-05-01,2805.845
+Otras renovables,aragon,2024-06-01,2650.178
+Otras renovables,aragon,2024-07-01,2838.673
+Otras renovables,aragon,2024-08-01,5256.853
+Otras renovables,aragon,2024-09-01,4459.46
+Otras renovables,aragon,2024-10-01,4742.681
+Otras renovables,aragon,2024-11-01,3808.283
+Otras renovables,aragon,2024-12-01,3842.89
+Generación renovable,aragon,2023-01-01,1898363.233
+Generación renovable,aragon,2023-02-01,1001824.703
+Generación renovable,aragon,2023-03-01,1669998.9429999995
+Generación renovable,aragon,2023-04-01,1577368.175
+Generación renovable,aragon,2023-05-01,1973296.782
+Generación renovable,aragon,2023-06-01,1303690.622
+Generación renovable,aragon,2023-07-01,1581288.962
+Generación renovable,aragon,2023-08-01,1530853.84
+Generación renovable,aragon,2023-09-01,948328.024
+Generación renovable,aragon,2023-10-01,1182437.748
+Generación renovable,aragon,2023-11-01,1841941.282
+Generación renovable,aragon,2023-12-01,1695386.076
+Generación renovable,aragon,2024-01-01,1362210.255
+Generación renovable,aragon,2024-02-01,1837922.679
+Generación renovable,aragon,2024-03-01,1768378.5070000002
+Generación renovable,aragon,2024-04-01,1813518.013
+Generación renovable,aragon,2024-05-01,1646589.295
+Generación renovable,aragon,2024-06-01,1786475.194
+Generación renovable,aragon,2024-07-01,1728227.395
+Generación renovable,aragon,2024-08-01,1495169.16
+Generación renovable,aragon,2024-09-01,1532647.006
+Generación renovable,aragon,2024-10-01,1419745.373
+Generación renovable,aragon,2024-11-01,1314006.005
+Generación renovable,aragon,2024-12-01,1740027.081
+Ciclo combinado,aragon,2023-01-01,32185.878
+Ciclo combinado,aragon,2023-02-01,299658.149
+Ciclo combinado,aragon,2023-03-01,149623.63
+Ciclo combinado,aragon,2023-04-01,40068.2
+Ciclo combinado,aragon,2023-05-01,134853.492
+Ciclo combinado,aragon,2023-06-01,304872.628
+Ciclo combinado,aragon,2023-07-01,290002.673
+Ciclo combinado,aragon,2023-08-01,244202.961
+Ciclo combinado,aragon,2023-09-01,324891.391
+Ciclo combinado,aragon,2023-10-01,91194.828
+Ciclo combinado,aragon,2023-11-01,110132.748
+Ciclo combinado,aragon,2023-12-01,115778.201
+Ciclo combinado,aragon,2024-01-01,132307.994
+Ciclo combinado,aragon,2024-02-01,15710.48
+Ciclo combinado,aragon,2024-03-01,35090.983
+Ciclo combinado,aragon,2024-04-01,13230.384
+Ciclo combinado,aragon,2024-05-01,18041.926
+Ciclo combinado,aragon,2024-06-01,67384.306
+Ciclo combinado,aragon,2024-07-01,125989.901
+Ciclo combinado,aragon,2024-08-01,126458.1
+Ciclo combinado,aragon,2024-09-01,63098.434
+Ciclo combinado,aragon,2024-10-01,100360.663
+Ciclo combinado,aragon,2024-11-01,177737.702
+Ciclo combinado,aragon,2024-12-01,179560.067
+Cogeneración,aragon,2023-01-01,124567.228
+Cogeneración,aragon,2023-02-01,140743.885
+Cogeneración,aragon,2023-03-01,152373.136
+Cogeneración,aragon,2023-04-01,153079.961
+Cogeneración,aragon,2023-05-01,175407.971
+Cogeneración,aragon,2023-06-01,187885.092
+Cogeneración,aragon,2023-07-01,161738.8
+Cogeneración,aragon,2023-08-01,112418.01
+Cogeneración,aragon,2023-09-01,108319.661
+Cogeneración,aragon,2023-10-01,87421.721
+Cogeneración,aragon,2023-11-01,74131.825
+Cogeneración,aragon,2023-12-01,77983.227
+Cogeneración,aragon,2024-01-01,140178.644
+Cogeneración,aragon,2024-02-01,92022.304
+Cogeneración,aragon,2024-03-01,54641.748
+Cogeneración,aragon,2024-04-01,50713.47
+Cogeneración,aragon,2024-05-01,66766.392
+Cogeneración,aragon,2024-06-01,92875.895
+Cogeneración,aragon,2024-07-01,110606.542
+Cogeneración,aragon,2024-08-01,145033.713
+Cogeneración,aragon,2024-09-01,112880.638
+Cogeneración,aragon,2024-10-01,106828.586
+Cogeneración,aragon,2024-11-01,149781.054
+Cogeneración,aragon,2024-12-01,140209.098
+Residuos no renovables,aragon,2023-01-01,12836.85
+Residuos no renovables,aragon,2023-02-01,12614.528
+Residuos no renovables,aragon,2023-03-01,20070.182
+Residuos no renovables,aragon,2023-04-01,15254.358
+Residuos no renovables,aragon,2023-05-01,7799.516
+Residuos no renovables,aragon,2023-06-01,22098.18
+Residuos no renovables,aragon,2023-07-01,20873.277
+Residuos no renovables,aragon,2023-08-01,19072.932
+Residuos no renovables,aragon,2023-09-01,17835.448
+Residuos no renovables,aragon,2023-10-01,16930.661
+Residuos no renovables,aragon,2023-11-01,16574.985
+Residuos no renovables,aragon,2023-12-01,10726.77
+Residuos no renovables,aragon,2024-01-01,14944.809
+Residuos no renovables,aragon,2024-02-01,7383.868
+Residuos no renovables,aragon,2024-03-01,937.963
+Residuos no renovables,aragon,2024-04-01,NA
+Residuos no renovables,aragon,2024-05-01,5923.496
+Residuos no renovables,aragon,2024-06-01,16425.449
+Residuos no renovables,aragon,2024-07-01,15108.929
+Residuos no renovables,aragon,2024-08-01,18496.481
+Residuos no renovables,aragon,2024-09-01,13192.572
+Residuos no renovables,aragon,2024-10-01,9419.69
+Residuos no renovables,aragon,2024-11-01,17910.53
+Residuos no renovables,aragon,2024-12-01,11546.595
+Generación no renovable,aragon,2023-01-01,169589.956
+Generación no renovable,aragon,2023-02-01,453016.562
+Generación no renovable,aragon,2023-03-01,322066.948
+Generación no renovable,aragon,2023-04-01,208402.51900000003
+Generación no renovable,aragon,2023-05-01,318060.979
+Generación no renovable,aragon,2023-06-01,514855.9
+Generación no renovable,aragon,2023-07-01,472614.75
+Generación no renovable,aragon,2023-08-01,375693.9030000001
+Generación no renovable,aragon,2023-09-01,451046.5
+Generación no renovable,aragon,2023-10-01,195547.21
+Generación no renovable,aragon,2023-11-01,200839.558
+Generación no renovable,aragon,2023-12-01,204488.198
+Generación no renovable,aragon,2024-01-01,287431.44700000004
+Generación no renovable,aragon,2024-02-01,115116.652
+Generación no renovable,aragon,2024-03-01,90670.694
+Generación no renovable,aragon,2024-04-01,63943.854
+Generación no renovable,aragon,2024-05-01,90731.814
+Generación no renovable,aragon,2024-06-01,176685.65
+Generación no renovable,aragon,2024-07-01,251705.372
+Generación no renovable,aragon,2024-08-01,289988.294
+Generación no renovable,aragon,2024-09-01,189171.64400000003
+Generación no renovable,aragon,2024-10-01,216608.939
+Generación no renovable,aragon,2024-11-01,345429.286
+Generación no renovable,aragon,2024-12-01,331315.76
+Turbinación bombeo,aragon,2023-01-01,34741.359
+Turbinación bombeo,aragon,2023-02-01,19870.946
+Turbinación bombeo,aragon,2023-03-01,26822.458
+Turbinación bombeo,aragon,2023-04-01,29603.894
+Turbinación bombeo,aragon,2023-05-01,19596.821
+Turbinación bombeo,aragon,2023-06-01,16536.523
+Turbinación bombeo,aragon,2023-07-01,17890.413
+Turbinación bombeo,aragon,2023-08-01,29154.746
+Turbinación bombeo,aragon,2023-09-01,6860.454
+Turbinación bombeo,aragon,2023-10-01,23877.365
+Turbinación bombeo,aragon,2023-11-01,33760.987
+Turbinación bombeo,aragon,2023-12-01,32493.348
+Turbinación bombeo,aragon,2024-01-01,24420.283
+Turbinación bombeo,aragon,2024-02-01,24471.477
+Turbinación bombeo,aragon,2024-03-01,42941.932
+Turbinación bombeo,aragon,2024-04-01,52641.388
+Turbinación bombeo,aragon,2024-05-01,41701.08
+Turbinación bombeo,aragon,2024-06-01,29946.369
+Turbinación bombeo,aragon,2024-07-01,36420.077
+Turbinación bombeo,aragon,2024-08-01,26483.474
+Turbinación bombeo,aragon,2024-09-01,9464.983
+Turbinación bombeo,aragon,2024-10-01,14355.497
+Turbinación bombeo,aragon,2024-11-01,30514.841
+Turbinación bombeo,aragon,2024-12-01,26005.758
+Consumo bombeo,aragon,2023-01-01,-47389.763
+Consumo bombeo,aragon,2023-02-01,-17577.367
+Consumo bombeo,aragon,2023-03-01,-50659.993
+Consumo bombeo,aragon,2023-04-01,-44589.508
+Consumo bombeo,aragon,2023-05-01,-31566.655
+Consumo bombeo,aragon,2023-06-01,-22046.028
+Consumo bombeo,aragon,2023-07-01,-24096.142
+Consumo bombeo,aragon,2023-08-01,-22710.692
+Consumo bombeo,aragon,2023-09-01,-14662.72
+Consumo bombeo,aragon,2023-10-01,-44411.618
+Consumo bombeo,aragon,2023-11-01,-42791.722
+Consumo bombeo,aragon,2023-12-01,-38965.869
+Consumo bombeo,aragon,2024-01-01,-45627.906
+Consumo bombeo,aragon,2024-02-01,-41024.951
+Consumo bombeo,aragon,2024-03-01,-59207.954
+Consumo bombeo,aragon,2024-04-01,-58164.465
+Consumo bombeo,aragon,2024-05-01,-64540.846
+Consumo bombeo,aragon,2024-06-01,-38481.66
+Consumo bombeo,aragon,2024-07-01,-34469.05
+Consumo bombeo,aragon,2024-08-01,-35542.159
+Consumo bombeo,aragon,2024-09-01,-14451.024
+Consumo bombeo,aragon,2024-10-01,-28321.161
+Consumo bombeo,aragon,2024-11-01,-24253.22
+Consumo bombeo,aragon,2024-12-01,-32491.497
+Saldo almacenamiento,aragon,2023-01-01,-12648.404000000002
+Saldo almacenamiento,aragon,2023-02-01,2293.579000000001
+Saldo almacenamiento,aragon,2023-03-01,-23837.535000000003
+Saldo almacenamiento,aragon,2023-04-01,-14985.614
+Saldo almacenamiento,aragon,2023-05-01,-11969.834
+Saldo almacenamiento,aragon,2023-06-01,-5509.504999999997
+Saldo almacenamiento,aragon,2023-07-01,-6205.728999999999
+Saldo almacenamiento,aragon,2023-08-01,6444.054
+Saldo almacenamiento,aragon,2023-09-01,-7802.266
+Saldo almacenamiento,aragon,2023-10-01,-20534.253
+Saldo almacenamiento,aragon,2023-11-01,-9030.735
+Saldo almacenamiento,aragon,2023-12-01,-6472.520999999997
+Saldo almacenamiento,aragon,2024-01-01,-21207.623000000003
+Saldo almacenamiento,aragon,2024-02-01,-16553.474000000002
+Saldo almacenamiento,aragon,2024-03-01,-16266.021999999995
+Saldo almacenamiento,aragon,2024-04-01,-5523.0769999999975
+Saldo almacenamiento,aragon,2024-05-01,-22839.766
+Saldo almacenamiento,aragon,2024-06-01,-8535.291000000005
+Saldo almacenamiento,aragon,2024-07-01,1951.0269999999944
+Saldo almacenamiento,aragon,2024-08-01,-9058.685
+Saldo almacenamiento,aragon,2024-09-01,-4986.040999999999
+Saldo almacenamiento,aragon,2024-10-01,-13965.664
+Saldo almacenamiento,aragon,2024-11-01,6261.620999999999
+Saldo almacenamiento,aragon,2024-12-01,-6485.738999999998
+Saldo de intercambios,aragon,2023-01-01,-1172648.985
+Saldo de intercambios,aragon,2023-02-01,-631001.999
+Saldo de intercambios,aragon,2023-03-01,-1120207.153
+Saldo de intercambios,aragon,2023-04-01,-1008244.831
+Saldo de intercambios,aragon,2023-05-01,-1464488.304
+Saldo de intercambios,aragon,2023-06-01,-1008895.748
+Saldo de intercambios,aragon,2023-07-01,-1208166.472
+Saldo de intercambios,aragon,2023-08-01,-1114468.086
+Saldo de intercambios,aragon,2023-09-01,-621548.501
+Saldo de intercambios,aragon,2023-10-01,-587018.007
+Saldo de intercambios,aragon,2023-11-01,-1242252.401
+Saldo de intercambios,aragon,2023-12-01,-1100169.004
+Saldo de intercambios,aragon,2024-01-01,-776709.601
+Saldo de intercambios,aragon,2024-02-01,-1102970.087
+Saldo de intercambios,aragon,2024-03-01,-982337.604
+Saldo de intercambios,aragon,2024-04-01,-1048528.85
+Saldo de intercambios,aragon,2024-05-01,-924759.686
+Saldo de intercambios,aragon,2024-06-01,-1161175.44
+Saldo de intercambios,aragon,2024-07-01,-1138234.196
+Saldo de intercambios,aragon,2024-08-01,-924019.458
+Saldo de intercambios,aragon,2024-09-01,-924971.236
+Saldo de intercambios,aragon,2024-10-01,-785389.947
+Saldo de intercambios,aragon,2024-11-01,-832971.551
+Saldo de intercambios,aragon,2024-12-01,-1180581.912
+Demanda en b.c.,aragon,2023-01-01,882655.7999999999
+Demanda en b.c.,aragon,2023-02-01,826132.845
+Demanda en b.c.,aragon,2023-03-01,848021.2030000001
+Demanda en b.c.,aragon,2023-04-01,762540.249
+Demanda en b.c.,aragon,2023-05-01,814899.6229999999
+Demanda en b.c.,aragon,2023-06-01,804141.2690000001
+Demanda en b.c.,aragon,2023-07-01,839531.5109999999
+Demanda en b.c.,aragon,2023-08-01,798523.7110000001
+Demanda en b.c.,aragon,2023-09-01,770023.757
+Demanda en b.c.,aragon,2023-10-01,770432.6980000001
+Demanda en b.c.,aragon,2023-11-01,791497.704
+Demanda en b.c.,aragon,2023-12-01,793232.7490000001
+Demanda en b.c.,aragon,2024-01-01,851724.478
+Demanda en b.c.,aragon,2024-02-01,833515.7699999999
+Demanda en b.c.,aragon,2024-03-01,860445.5749999998
+Demanda en b.c.,aragon,2024-04-01,823409.9400000001
+Demanda en b.c.,aragon,2024-05-01,789721.657
+Demanda en b.c.,aragon,2024-06-01,793450.1130000001
+Demanda en b.c.,aragon,2024-07-01,843649.598
+Demanda en b.c.,aragon,2024-08-01,852079.3109999999
+Demanda en b.c.,aragon,2024-09-01,791861.3729999999
+Demanda en b.c.,aragon,2024-10-01,836998.7009999999
+Demanda en b.c.,aragon,2024-11-01,832725.361
+Demanda en b.c.,aragon,2024-12-01,884275.1900000001

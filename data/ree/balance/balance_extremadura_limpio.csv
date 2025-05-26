@@ -1,0 +1,337 @@
+variable,comunidad,fecha,valor
+Hidráulica,extremadura,2023-01-01,382387.368
+Hidráulica,extremadura,2023-02-01,276135.413
+Hidráulica,extremadura,2023-03-01,121806.844
+Hidráulica,extremadura,2023-04-01,109323.837
+Hidráulica,extremadura,2023-05-01,76589.416
+Hidráulica,extremadura,2023-06-01,188361.222
+Hidráulica,extremadura,2023-07-01,182733.831
+Hidráulica,extremadura,2023-08-01,77351.275
+Hidráulica,extremadura,2023-09-01,60753.645
+Hidráulica,extremadura,2023-10-01,97072.505
+Hidráulica,extremadura,2023-11-01,185023.472
+Hidráulica,extremadura,2023-12-01,360752.461
+Hidráulica,extremadura,2024-01-01,482160.594
+Hidráulica,extremadura,2024-02-01,449149.2
+Hidráulica,extremadura,2024-03-01,556581.971
+Hidráulica,extremadura,2024-04-01,437644.666
+Hidráulica,extremadura,2024-05-01,163390.708
+Hidráulica,extremadura,2024-06-01,256057.428
+Hidráulica,extremadura,2024-07-01,354012.85
+Hidráulica,extremadura,2024-08-01,226985.782
+Hidráulica,extremadura,2024-09-01,119458.34
+Hidráulica,extremadura,2024-10-01,206949.758
+Hidráulica,extremadura,2024-11-01,109828.911
+Hidráulica,extremadura,2024-12-01,142324.591
+Eólica,extremadura,2023-01-01,9889.01
+Eólica,extremadura,2023-02-01,14350.656
+Eólica,extremadura,2023-03-01,8488.186
+Eólica,extremadura,2023-04-01,8674.659
+Eólica,extremadura,2023-05-01,9356.909
+Eólica,extremadura,2023-06-01,6607.188
+Eólica,extremadura,2023-07-01,6080.876
+Eólica,extremadura,2023-08-01,8476.349
+Eólica,extremadura,2023-09-01,7033.705
+Eólica,extremadura,2023-10-01,10692.616
+Eólica,extremadura,2023-11-01,8773.345
+Eólica,extremadura,2023-12-01,7596.604
+Eólica,extremadura,2024-01-01,16688.412
+Eólica,extremadura,2024-02-01,20061.756
+Eólica,extremadura,2024-03-01,25340.917
+Eólica,extremadura,2024-04-01,14998.573
+Eólica,extremadura,2024-05-01,15699.127
+Eólica,extremadura,2024-06-01,11376.514
+Eólica,extremadura,2024-07-01,12899.576
+Eólica,extremadura,2024-08-01,13626.679
+Eólica,extremadura,2024-09-01,14964.013
+Eólica,extremadura,2024-10-01,25235.578
+Eólica,extremadura,2024-11-01,29971.864
+Eólica,extremadura,2024-12-01,21750.914
+Solar fotovoltaica,extremadura,2023-01-01,443761.727
+Solar fotovoltaica,extremadura,2023-02-01,619850.315
+Solar fotovoltaica,extremadura,2023-03-01,792766.773
+Solar fotovoltaica,extremadura,2023-04-01,1015812.203
+Solar fotovoltaica,extremadura,2023-05-01,1035900.651
+Solar fotovoltaica,extremadura,2023-06-01,940804.847
+Solar fotovoltaica,extremadura,2023-07-01,1019749.603
+Solar fotovoltaica,extremadura,2023-08-01,1093934.352
+Solar fotovoltaica,extremadura,2023-09-01,805476.731
+Solar fotovoltaica,extremadura,2023-10-01,575794.584
+Solar fotovoltaica,extremadura,2023-11-01,423685.253
+Solar fotovoltaica,extremadura,2023-12-01,424036.179
+Solar fotovoltaica,extremadura,2024-01-01,456649.594
+Solar fotovoltaica,extremadura,2024-02-01,577056.967
+Solar fotovoltaica,extremadura,2024-03-01,655488.857
+Solar fotovoltaica,extremadura,2024-04-01,848889.975
+Solar fotovoltaica,extremadura,2024-05-01,1169560.446
+Solar fotovoltaica,extremadura,2024-06-01,1096897.279
+Solar fotovoltaica,extremadura,2024-07-01,1425964.415
+Solar fotovoltaica,extremadura,2024-08-01,1300232.407
+Solar fotovoltaica,extremadura,2024-09-01,1007043.399
+Solar fotovoltaica,extremadura,2024-10-01,639979.864
+Solar fotovoltaica,extremadura,2024-11-01,571385.184
+Solar fotovoltaica,extremadura,2024-12-01,643002.002
+Solar térmica,extremadura,2023-01-01,40496.18
+Solar térmica,extremadura,2023-02-01,79341.144
+Solar térmica,extremadura,2023-03-01,148114.563
+Solar térmica,extremadura,2023-04-01,262799.787
+Solar térmica,extremadura,2023-05-01,204933.076
+Solar térmica,extremadura,2023-06-01,207433.847
+Solar térmica,extremadura,2023-07-01,309488.867
+Solar térmica,extremadura,2023-08-01,277732.036
+Solar térmica,extremadura,2023-09-01,151205.359
+Solar térmica,extremadura,2023-10-01,75061.533
+Solar térmica,extremadura,2023-11-01,32894.217
+Solar térmica,extremadura,2023-12-01,27088.245
+Solar térmica,extremadura,2024-01-01,34860.643
+Solar térmica,extremadura,2024-02-01,61141.75
+Solar térmica,extremadura,2024-03-01,48550.609
+Solar térmica,extremadura,2024-04-01,187665.792
+Solar térmica,extremadura,2024-05-01,239041.085
+Solar térmica,extremadura,2024-06-01,184976.308
+Solar térmica,extremadura,2024-07-01,252558.719
+Solar térmica,extremadura,2024-08-01,278956.141
+Solar térmica,extremadura,2024-09-01,192989.89
+Solar térmica,extremadura,2024-10-01,49806.592
+Solar térmica,extremadura,2024-11-01,33265.285
+Solar térmica,extremadura,2024-12-01,38941.213
+Otras renovables,extremadura,2023-01-01,17488.592
+Otras renovables,extremadura,2023-02-01,22320.296
+Otras renovables,extremadura,2023-03-01,19151.074
+Otras renovables,extremadura,2023-04-01,12969.687
+Otras renovables,extremadura,2023-05-01,22936.442
+Otras renovables,extremadura,2023-06-01,19980.716
+Otras renovables,extremadura,2023-07-01,16051.377
+Otras renovables,extremadura,2023-08-01,20001.928
+Otras renovables,extremadura,2023-09-01,18603.573
+Otras renovables,extremadura,2023-10-01,13243.982
+Otras renovables,extremadura,2023-11-01,11319.97
+Otras renovables,extremadura,2023-12-01,17998.565
+Otras renovables,extremadura,2024-01-01,15177.911
+Otras renovables,extremadura,2024-02-01,8942.694
+Otras renovables,extremadura,2024-03-01,17330.266
+Otras renovables,extremadura,2024-04-01,16710.453
+Otras renovables,extremadura,2024-05-01,22172.634
+Otras renovables,extremadura,2024-06-01,19492.623
+Otras renovables,extremadura,2024-07-01,15264.785
+Otras renovables,extremadura,2024-08-01,19814.634
+Otras renovables,extremadura,2024-09-01,20830.182
+Otras renovables,extremadura,2024-10-01,14940.589
+Otras renovables,extremadura,2024-11-01,8634.678
+Otras renovables,extremadura,2024-12-01,17229.09
+Generación renovable,extremadura,2023-01-01,894022.877
+Generación renovable,extremadura,2023-02-01,1011997.824
+Generación renovable,extremadura,2023-03-01,1090327.4400000002
+Generación renovable,extremadura,2023-04-01,1409580.173
+Generación renovable,extremadura,2023-05-01,1349716.4940000002
+Generación renovable,extremadura,2023-06-01,1363187.82
+Generación renovable,extremadura,2023-07-01,1534104.5540000002
+Generación renovable,extremadura,2023-08-01,1477495.9400000002
+Generación renovable,extremadura,2023-09-01,1043073.013
+Generación renovable,extremadura,2023-10-01,771865.2200000001
+Generación renovable,extremadura,2023-11-01,661696.257
+Generación renovable,extremadura,2023-12-01,837472.0539999999
+Generación renovable,extremadura,2024-01-01,1005537.154
+Generación renovable,extremadura,2024-02-01,1116352.367
+Generación renovable,extremadura,2024-03-01,1303292.62
+Generación renovable,extremadura,2024-04-01,1505909.4589999998
+Generación renovable,extremadura,2024-05-01,1609864
+Generación renovable,extremadura,2024-06-01,1568800.152
+Generación renovable,extremadura,2024-07-01,2060700.345
+Generación renovable,extremadura,2024-08-01,1839615.643
+Generación renovable,extremadura,2024-09-01,1355285.824
+Generación renovable,extremadura,2024-10-01,936912.381
+Generación renovable,extremadura,2024-11-01,753085.922
+Generación renovable,extremadura,2024-12-01,863247.8099999999
+Nuclear,extremadura,2023-01-01,1435529.004
+Nuclear,extremadura,2023-02-01,1359350.196
+Nuclear,extremadura,2023-03-01,1490718.636
+Nuclear,extremadura,2023-04-01,1085384.958
+Nuclear,extremadura,2023-05-01,932308.047
+Nuclear,extremadura,2023-06-01,1425830.275
+Nuclear,extremadura,2023-07-01,1470404.358
+Nuclear,extremadura,2023-08-01,1458021.529
+Nuclear,extremadura,2023-09-01,1425026.148
+Nuclear,extremadura,2023-10-01,1444176.246
+Nuclear,extremadura,2023-11-01,1360705.278
+Nuclear,extremadura,2023-12-01,1504088.965
+Nuclear,extremadura,2024-01-01,1502889.552
+Nuclear,extremadura,2024-02-01,1336918.769
+Nuclear,extremadura,2024-03-01,931657.941
+Nuclear,extremadura,2024-04-01,724708.098
+Nuclear,extremadura,2024-05-01,1308896.647
+Nuclear,extremadura,2024-06-01,1384039.248
+Nuclear,extremadura,2024-07-01,1468222.554
+Nuclear,extremadura,2024-08-01,1457462.375
+Nuclear,extremadura,2024-09-01,1419651.012
+Nuclear,extremadura,2024-10-01,885066.335
+Nuclear,extremadura,2024-11-01,1233096.458
+Nuclear,extremadura,2024-12-01,1498508.431
+Cogeneración,extremadura,2023-01-01,2903.102
+Cogeneración,extremadura,2023-02-01,4332.116
+Cogeneración,extremadura,2023-03-01,4620.868
+Cogeneración,extremadura,2023-04-01,3637.378
+Cogeneración,extremadura,2023-05-01,4600.427
+Cogeneración,extremadura,2023-06-01,4427.544
+Cogeneración,extremadura,2023-07-01,2904.596
+Cogeneración,extremadura,2023-08-01,1801.939
+Cogeneración,extremadura,2023-09-01,3429.508
+Cogeneración,extremadura,2023-10-01,3367.543
+Cogeneración,extremadura,2023-11-01,2093.025
+Cogeneración,extremadura,2023-12-01,3067.283
+Cogeneración,extremadura,2024-01-01,3907.356
+Cogeneración,extremadura,2024-02-01,3860.8
+Cogeneración,extremadura,2024-03-01,3236.479
+Cogeneración,extremadura,2024-04-01,2930.026
+Cogeneración,extremadura,2024-05-01,3056.483
+Cogeneración,extremadura,2024-06-01,3285.1
+Cogeneración,extremadura,2024-07-01,2131.832
+Cogeneración,extremadura,2024-08-01,1751.836
+Cogeneración,extremadura,2024-09-01,3024.475
+Cogeneración,extremadura,2024-10-01,3176.07
+Cogeneración,extremadura,2024-11-01,4066.989
+Cogeneración,extremadura,2024-12-01,4113.319
+Generación no renovable,extremadura,2023-01-01,1438432.106
+Generación no renovable,extremadura,2023-02-01,1363682.312
+Generación no renovable,extremadura,2023-03-01,1495339.504
+Generación no renovable,extremadura,2023-04-01,1089022.336
+Generación no renovable,extremadura,2023-05-01,936908.474
+Generación no renovable,extremadura,2023-06-01,1430257.819
+Generación no renovable,extremadura,2023-07-01,1473308.954
+Generación no renovable,extremadura,2023-08-01,1459823.468
+Generación no renovable,extremadura,2023-09-01,1428455.656
+Generación no renovable,extremadura,2023-10-01,1447543.789
+Generación no renovable,extremadura,2023-11-01,1362798.3029999998
+Generación no renovable,extremadura,2023-12-01,1507156.248
+Generación no renovable,extremadura,2024-01-01,1506796.9079999998
+Generación no renovable,extremadura,2024-02-01,1340779.569
+Generación no renovable,extremadura,2024-03-01,934894.42
+Generación no renovable,extremadura,2024-04-01,727638.124
+Generación no renovable,extremadura,2024-05-01,1311953.13
+Generación no renovable,extremadura,2024-06-01,1387324.348
+Generación no renovable,extremadura,2024-07-01,1470354.386
+Generación no renovable,extremadura,2024-08-01,1459214.211
+Generación no renovable,extremadura,2024-09-01,1422675.4870000002
+Generación no renovable,extremadura,2024-10-01,888242.4049999999
+Generación no renovable,extremadura,2024-11-01,1237163.4470000002
+Generación no renovable,extremadura,2024-12-01,1502621.75
+Turbinación bombeo,extremadura,2023-01-01,5715.189
+Turbinación bombeo,extremadura,2023-02-01,2114.821
+Turbinación bombeo,extremadura,2023-03-01,2217.422
+Turbinación bombeo,extremadura,2023-04-01,977.707
+Turbinación bombeo,extremadura,2023-05-01,3163.202
+Turbinación bombeo,extremadura,2023-06-01,3165.103
+Turbinación bombeo,extremadura,2023-07-01,976.151
+Turbinación bombeo,extremadura,2023-08-01,469.519
+Turbinación bombeo,extremadura,2023-09-01,2428.05
+Turbinación bombeo,extremadura,2023-10-01,4963.469
+Turbinación bombeo,extremadura,2023-11-01,4273.393
+Turbinación bombeo,extremadura,2023-12-01,2962.32
+Turbinación bombeo,extremadura,2024-01-01,3922.053
+Turbinación bombeo,extremadura,2024-02-01,4035.07
+Turbinación bombeo,extremadura,2024-03-01,5493.35
+Turbinación bombeo,extremadura,2024-04-01,1223.33
+Turbinación bombeo,extremadura,2024-05-01,5621.526
+Turbinación bombeo,extremadura,2024-06-01,10388.651
+Turbinación bombeo,extremadura,2024-07-01,7825.106
+Turbinación bombeo,extremadura,2024-08-01,4266.215
+Turbinación bombeo,extremadura,2024-09-01,6007.469
+Turbinación bombeo,extremadura,2024-10-01,8577.333
+Turbinación bombeo,extremadura,2024-11-01,5116.715
+Turbinación bombeo,extremadura,2024-12-01,3005.478
+Consumo bombeo,extremadura,2023-01-01,-13325.242
+Consumo bombeo,extremadura,2023-02-01,-4379.638
+Consumo bombeo,extremadura,2023-03-01,-5185.778
+Consumo bombeo,extremadura,2023-04-01,-2652.476
+Consumo bombeo,extremadura,2023-05-01,-5860.433
+Consumo bombeo,extremadura,2023-06-01,-6609.275
+Consumo bombeo,extremadura,2023-07-01,-1563.468
+Consumo bombeo,extremadura,2023-08-01,-1090.684
+Consumo bombeo,extremadura,2023-09-01,-4723.23
+Consumo bombeo,extremadura,2023-10-01,-10464.346
+Consumo bombeo,extremadura,2023-11-01,-10263.046
+Consumo bombeo,extremadura,2023-12-01,-6653.007
+Consumo bombeo,extremadura,2024-01-01,-9409.395
+Consumo bombeo,extremadura,2024-02-01,-8668.95
+Consumo bombeo,extremadura,2024-03-01,-9816.864
+Consumo bombeo,extremadura,2024-04-01,-2121.89
+Consumo bombeo,extremadura,2024-05-01,-10360.968
+Consumo bombeo,extremadura,2024-06-01,-17681.452
+Consumo bombeo,extremadura,2024-07-01,-13017.004
+Consumo bombeo,extremadura,2024-08-01,-7288.176
+Consumo bombeo,extremadura,2024-09-01,-10829.874
+Consumo bombeo,extremadura,2024-10-01,-17792.602
+Consumo bombeo,extremadura,2024-11-01,-12700.271
+Consumo bombeo,extremadura,2024-12-01,-8742.768
+Saldo almacenamiento,extremadura,2023-01-01,-7610.053
+Saldo almacenamiento,extremadura,2023-02-01,-2264.817
+Saldo almacenamiento,extremadura,2023-03-01,-2968.356
+Saldo almacenamiento,extremadura,2023-04-01,-1674.7690000000002
+Saldo almacenamiento,extremadura,2023-05-01,-2697.231
+Saldo almacenamiento,extremadura,2023-06-01,-3444.172
+Saldo almacenamiento,extremadura,2023-07-01,-587.3170000000001
+Saldo almacenamiento,extremadura,2023-08-01,-621.165
+Saldo almacenamiento,extremadura,2023-09-01,-2295.1799999999994
+Saldo almacenamiento,extremadura,2023-10-01,-5500.877
+Saldo almacenamiento,extremadura,2023-11-01,-5989.653
+Saldo almacenamiento,extremadura,2023-12-01,-3690.687
+Saldo almacenamiento,extremadura,2024-01-01,-5487.342000000001
+Saldo almacenamiento,extremadura,2024-02-01,-4633.880000000001
+Saldo almacenamiento,extremadura,2024-03-01,-4323.513999999999
+Saldo almacenamiento,extremadura,2024-04-01,-898.56
+Saldo almacenamiento,extremadura,2024-05-01,-4739.442000000001
+Saldo almacenamiento,extremadura,2024-06-01,-7292.801000000001
+Saldo almacenamiento,extremadura,2024-07-01,-5191.898000000001
+Saldo almacenamiento,extremadura,2024-08-01,-3021.961
+Saldo almacenamiento,extremadura,2024-09-01,-4822.405
+Saldo almacenamiento,extremadura,2024-10-01,-9215.268999999998
+Saldo almacenamiento,extremadura,2024-11-01,-7583.556
+Saldo almacenamiento,extremadura,2024-12-01,-5737.29
+Saldo de intercambios,extremadura,2023-01-01,-1878723.911
+Saldo de intercambios,extremadura,2023-02-01,-1965693.185
+Saldo de intercambios,extremadura,2023-03-01,-2180462.011
+Saldo de intercambios,extremadura,2023-04-01,-2152558.855
+Saldo de intercambios,extremadura,2023-05-01,-1939650.564
+Saldo de intercambios,extremadura,2023-06-01,-2405870.72
+Saldo de intercambios,extremadura,2023-07-01,-2588359.562
+Saldo de intercambios,extremadura,2023-08-01,-2448407.116
+Saldo de intercambios,extremadura,2023-09-01,-2095359.545
+Saldo de intercambios,extremadura,2023-10-01,-1834348.293
+Saldo de intercambios,extremadura,2023-11-01,-1626729.893
+Saldo de intercambios,extremadura,2023-12-01,-1907270.967
+Saldo de intercambios,extremadura,2024-01-01,-2061601.082
+Saldo de intercambios,extremadura,2024-02-01,-2048616.004
+Saldo de intercambios,extremadura,2024-03-01,-1841849.864
+Saldo de intercambios,extremadura,2024-04-01,-1872152.053
+Saldo de intercambios,extremadura,2024-05-01,-2562917.495
+Saldo de intercambios,extremadura,2024-06-01,-2577918.008
+Saldo de intercambios,extremadura,2024-07-01,-3106158.144
+Saldo de intercambios,extremadura,2024-08-01,-2779501.015
+Saldo de intercambios,extremadura,2024-09-01,-2384888.946
+Saldo de intercambios,extremadura,2024-10-01,-1445457.739
+Saldo de intercambios,extremadura,2024-11-01,-1600016.981
+Saldo de intercambios,extremadura,2024-12-01,-1963617.568
+Demanda en b.c.,extremadura,2023-01-01,446121.0189999999
+Demanda en b.c.,extremadura,2023-02-01,407722.1339999999
+Demanda en b.c.,extremadura,2023-03-01,402236.57700000016
+Demanda en b.c.,extremadura,2023-04-01,344368.8850000001
+Demanda en b.c.,extremadura,2023-05-01,344277.17299999984
+Demanda en b.c.,extremadura,2023-06-01,384130.7469999997
+Demanda en b.c.,extremadura,2023-07-01,418466.629
+Demanda en b.c.,extremadura,2023-08-01,488291.1269999999
+Demanda en b.c.,extremadura,2023-09-01,373873.9440000003
+Demanda en b.c.,extremadura,2023-10-01,379559.839
+Demanda en b.c.,extremadura,2023-11-01,391775.01400000014
+Demanda en b.c.,extremadura,2023-12-01,433666.6480000002
+Demanda en b.c.,extremadura,2024-01-01,445245.638
+Demanda en b.c.,extremadura,2024-02-01,403882.05200000026
+Demanda en b.c.,extremadura,2024-03-01,392013.662
+Demanda en b.c.,extremadura,2024-04-01,360496.97
+Demanda en b.c.,extremadura,2024-05-01,354160.1929999998
+Demanda en b.c.,extremadura,2024-06-01,370913.6910000001
+Demanda en b.c.,extremadura,2024-07-01,419704.6890000003
+Demanda en b.c.,extremadura,2024-08-01,516306.8779999997
+Demanda en b.c.,extremadura,2024-09-01,388249.9600000002
+Demanda en b.c.,extremadura,2024-10-01,370481.7780000001
+Demanda en b.c.,extremadura,2024-11-01,382648.83200000005
+Demanda en b.c.,extremadura,2024-12-01,396514.7020000001
