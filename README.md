@@ -31,11 +31,13 @@ Este repositorio contiene el desarrollo completo del proyecto realizado en la as
 │   └── ...                     # Resto de objetivos
 │
 ├── data/                      # Conjunto de datos finales utilizados
-│   ├── generacion_todas_comunidades.csv
-│   ├── generation.zip         # zip con todos los csv por comunidad
-│   ├── clima_leon.csv
-│   └── ...                    # Otros datasets limpios
-│
+│   ├── aemet/
+│       │── aemet_objetivo4...
+│   ├── ree/   
+│       ├── generacion_todas_comunidades.csv 
+│       ├── generation.zip     # zip con todos los csv por comunidad       
+│       ├── .....
+|
 ├── docs/                      # Informes, memoria final y anexos HTML
 │   ├── memoria_final.docx
 │   ├── index_anexos.md
