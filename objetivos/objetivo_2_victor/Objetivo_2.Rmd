@@ -1,0 +1,498 @@
+---
+title: "Objetivo_2"
+author: "Víctor"
+date: "2025-05-21"
+output:
+  html_document: default
+  word_document: default
+---
+
+```{r}
+library(readr)
+gen <- read_csv("generacion_todas_comunidades.csv", show_col_types = FALSE)
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+
+# Definir las estaciones
+asignar_estacion <- function(mes) {
+  case_when(
+    mes %in% c(12, 1, 2)  ~ "Invierno",
+    mes %in% 3:5          ~ "Primavera",
+    mes %in% 6:8          ~ "Verano",
+    mes %in% 9:11         ~ "Otoño",
+    TRUE ~ NA_character_
+  )
+}
+
+# Preparar datos
+renovables_trimestre <- gen %>%
+  filter(variable %in% c("Eólica", "Solar fotovoltaica", "Solar térmica", "Hidráulica", "Otras renovables")) %>%
+  mutate(
+    año = year(fecha),
+    mes = month(fecha),
+    estacion = asignar_estacion(mes)
+  ) %>%
+  group_by(año, estacion, variable) %>%
+  summarise(produccion_total = sum(valor, na.rm = TRUE), .groups = "drop")
+
+# Gráfico de barras
+ggplot(renovables_trimestre, aes(x = estacion, y = produccion_total, fill = variable)) +
+  geom_col(position = "dodge") +
+  facet_wrap(~ año) +
+  labs(
+    title = "Producción nacional de energías renovables por estación",
+    x = "Estación del año",
+    y = "Producción total (MWh)",
+    fill = "Tipo de energía"
+  ) +
+  theme_minimal() +
+  scale_fill_viridis_d()
+```
+Este gráfico muestra la producción de diferentes tipos de energías renovables en España, desglosada por estaciones del año y años.
+
+```{r}
+asignar_estacion <- function(mes) {
+  case_when(
+    mes %in% c(12, 1, 2)  ~ "Invierno",
+    mes %in% 3:5          ~ "Primavera",
+    mes %in% 6:8          ~ "Verano",
+    mes %in% 9:11         ~ "Otoño",
+    TRUE ~ NA_character_
+  )
+}
+
+# Preparar datos agregados
+renovables_total_estacion <- gen %>%
+  filter(variable %in% c("Eólica", "Solar fotovoltaica", "Solar térmica", "Hidráulica", "Otras renovables")) %>%
+  mutate(
+    año = year(fecha),
+    mes = month(fecha),
+    estacion = asignar_estacion(mes)
+  ) %>%
+  group_by(año, estacion) %>%
+  summarise(produccion_total = sum(valor, na.rm = TRUE), .groups = "drop")
+
+# Gráfico
+ggplot(renovables_total_estacion, aes(x = estacion, y = produccion_total, fill = estacion)) +
+  geom_col() +
+  facet_wrap(~ año) +
+  labs(
+    title = "Producción nacional total de energías renovables por estación",
+    x = "Estación del año",
+    y = "Producción total (MWh)"
+  ) +
+  theme_minimal() +
+  scale_fill_viridis_d() +
+  theme(legend.position = "none")
+```
+Este gráfico muestra la producción total de energías renovables en España, desglosada por estaciones del año y años.
+
+```{r}
+renovables <- gen %>%
+  filter(variable %in% c("Eólica", "Solar fotovoltaica", "Solar térmica", "Hidráulica", "Otras renovables")) %>%
+  mutate(comunidad = tolower(comunidad))
+
+renovables_comunidad <- renovables %>%
+  group_by(comunidad) %>%
+  summarise(generacion_renovable_total = sum(valor, na.rm = TRUE)) %>%
+  arrange(desc(generacion_renovable_total))
+
+ggplot(renovables_comunidad, aes(x = reorder(comunidad, generacion_renovable_total), y = generacion_renovable_total)) +
+  geom_col(fill = "darkgreen") +
+  coord_flip() +
+  labs(
+    title = "Generación total de energías renovables por comunidad",
+    x = "Comunidad", y = "Generación renovable (MWh)"
+  ) +
+  theme_minimal()
+```
+Las comunidades que más destacan por su producción energética mediante energías renovables son Castilla y León, Castilla-La Mancha, Andalucía, Aragón y Galicia.
+
+```{r}
+library(shiny)
+library(tidyr)
+
+data <- read_csv("generacion_todas_comunidades.csv") %>%
+  rename(
+    Energia = variable,
+    Comunidad = comunidad,
+    Generacion = valor,
+    Fecha = fecha
+  ) %>%
+  mutate(
+    Fecha    = ymd(Fecha),
+    Año      = year(Fecha),
+    Mes      = month(Fecha),
+    MesLabel = month(Fecha, label = TRUE, abbr = TRUE)
+  )
+
+# Colores personalizados por tipo de energía
+colores_energia <- c(
+  "Eólica"             = "#F8766D",
+  "Solar fotovoltaica" = "#00BFC4",
+  "Hidráulica"         = "#FFDE00",
+  "Otras renovables"   = "#C77CFF",
+  "Solar térmica"      = "#7CAE00"
+)
+
+# Interfaz de usuario
+ui <- fluidPage(
+  titlePanel("Dashboard: Generación de Energías Renovables en España"),
+  sidebarLayout(
+    sidebarPanel(
+      selectInput("comunidad", "Comunidad Autónoma:",
+                  choices = c("España (nacional)", unique(data$Comunidad))),
+      selectInput("anio", "Año:",
+                  choices = sort(unique(data$Año))),
+      selectInput("energia", "Tipo de Energía:",
+                  choices = c("Total Renovables", names(colores_energia)))
+    ),
+    mainPanel(
+      plotOutput("plotGeneracion", height = "500px"),
+      br(),
+      h4("Correlación con otras energías renovables"),
+      plotOutput("plotCorrelacion", height = "400px")
+    )
+  )
+)
+
+# Lógica del servidor
+server <- function(input, output, session) {
+
+  # Dataset filtrado para gráfico principal
+  datosFiltrados <- reactive({
+    req(input$comunidad, input$anio, input$energia)
+
+    base <- data %>%
+      filter(
+        Año == input$anio,
+        if (input$comunidad != "España (nacional)") Comunidad == input$comunidad else TRUE
+      )
+
+    if (input$energia == "Total Renovables") {
+      base %>%
+        filter(Energia %in% names(colores_energia)) %>%
+        group_by(MesLabel, Mes) %>%
+        summarise(Generacion = sum(Generacion, na.rm = TRUE), .groups = "drop") %>%
+        mutate(Energia = "Total Renovables", Comunidad = input$comunidad)
+    } else {
+      base %>%
+        filter(Energia == input$energia)
+    }
+  })
+
+  # Gráfico de generación mensual SIN LEYENDA
+  output$plotGeneracion <- renderPlot({
+    df <- datosFiltrados()
+
+    validate(
+      need(nrow(df) > 0, "⚠️ No hay datos para la energía, comunidad y año seleccionados.")
+    )
+
+    ggplot(df, aes(x = MesLabel, y = Generacion, fill = Energia)) +
+      geom_col(position = "stack", show.legend = FALSE) +
+      scale_fill_manual(values = c(colores_energia, "Total Renovables" = "darkgreen")) +
+      labs(
+        x = "Mes",
+        y = "Generación (MWh)",
+        title = paste("Generación Mensual -", input$comunidad, input$anio),
+        subtitle = input$energia
+      ) +
+      theme_minimal() +
+      theme(legend.position = "none")
+  })
+
+  # Matriz de correlación entre energías renovables
+  matrizCorrelacion <- reactive({
+    req(input$comunidad, input$anio)
+
+    energias_renovables <- names(colores_energia)
+
+    df_filtrado <- if (input$comunidad == "España (nacional)") {
+      data %>%
+        filter(
+          Año == input$anio,
+          Energia %in% energias_renovables
+        ) %>%
+        group_by(MesLabel, Energia) %>%
+        summarise(Generacion = sum(Generacion, na.rm = TRUE), .groups = "drop")
+    } else {
+      data %>%
+        filter(
+          Comunidad == input$comunidad,
+          Año == input$anio,
+          Energia %in% energias_renovables
+        ) %>%
+        group_by(MesLabel, Energia) %>%
+        summarise(Generacion = sum(Generacion, na.rm = TRUE), .groups = "drop")
+    }
+
+    df_wide <- df_filtrado %>%
+      pivot_wider(names_from = Energia, values_from = Generacion) %>%
+      select(-MesLabel)
+
+    df_wide <- df_wide[, colSums(!is.na(df_wide)) > 1, drop = FALSE]
+    if (ncol(df_wide) > 1) cor(df_wide, use = "pairwise.complete.obs") else NULL
+  })
+
+  # Gráfico de correlación con otras energías
+  output$plotCorrelacion <- renderPlot({
+    if (input$energia == "Total Renovables") {
+      plot.new()
+      title("Selecciona una energía individual para ver su correlación.")
+      return()
+    }
+
+    matriz <- matrizCorrelacion()
+    energia_base <- input$energia
+
+    validate(
+      need(!is.null(matriz), "⚠️ No hay datos suficientes para calcular correlaciones."),
+      need(energia_base %in% rownames(matriz), "⚠️ No se puede calcular correlación para esta energía.")
+    )
+
+    cor_vector <- matriz[energia_base, ]
+    cor_filtrada <- data.frame(
+      Energía = names(cor_vector),
+      Correlación = as.numeric(cor_vector)
+    ) %>%
+      filter(Energía != energia_base)
+
+    validate(
+      need(nrow(cor_filtrada) > 0, "⚠️ No hay otras energías con las que correlacionar.")
+    )
+
+    ggplot(cor_filtrada, aes(x = reorder(Energía, Correlación), y = Correlación, fill = Energía)) +
+      geom_col(show.legend = FALSE) +
+      coord_flip() +
+      scale_fill_manual(values = colores_energia) +
+      labs(
+        title = paste("Correlación con", energia_base),
+        subtitle = paste("Año", input$anio, "-", input$comunidad),
+        x = NULL,
+        y = "Correlación"
+      ) +
+      theme_minimal()
+  })
+}
+
+# Ejecutar app
+shinyApp(ui, server)
+```
+Esta app nos permite observar la generación de energía mediante energías renovables en España, tanto a nivel nacional como por comunidad autónoma. Podemos seleccionar el tipo de energía y el año para ver la producción dividida en meses. Además, se incluye un gráfico que muestra la correlación entre diferentes tipos de energías renovables para el año y comunidad seleccionados.
+
+```{r}
+library(corrplot)
+renovables <- c("Eólica", "Hidráulica", "Solar fotovoltaica", "Solar térmica", "Otras renovables")
+
+# Preparar los datos
+gen_clean <- gen %>%
+  rename(
+    Comunidad = comunidad,
+    Fecha = fecha,
+    Energia = variable,
+    Generacion = valor
+  ) %>%
+  mutate(Fecha = ymd(Fecha)) %>%
+  filter(Energia %in% renovables)
+
+calcular_correlacion_anual <- function(datos, año) {
+  datos %>%
+    filter(year(Fecha) == año) %>%
+    group_by(Mes = month(Fecha), Energia) %>%
+    summarise(Generacion = sum(Generacion, na.rm = TRUE), .groups = "drop") %>%
+    pivot_wider(names_from = Energia, values_from = Generacion) %>%
+    select(-Mes) %>%
+    cor(use = "pairwise.complete.obs")
+}
+
+# Matrices de correlación
+cor_2023 <- calcular_correlacion_anual(gen_clean, 2023)
+cor_2024 <- calcular_correlacion_anual(gen_clean, 2024)
+
+colores_personalizados <- colorRampPalette(c("#1100FF", "white", "#FF6600"))(200)
+
+# 2023
+corrplot(cor_2023,
+         method = "color",
+         type = "upper",
+         col = colores_personalizados,
+         tl.col = "black",
+         tl.cex = 0.9,
+         title = "Correlación de energías renovables a nivel nacional - Año 2023",
+         mar = c(0,0,2,0),
+         addCoef.col = "black")
+
+# 2024
+corrplot(cor_2024,
+         method = "color",
+         type = "upper",
+         col = colores_personalizados,
+         tl.col = "black",
+         tl.cex = 0.9,
+         title = "Correlación de energías renovables a nivel nacional - Año 2024",
+         mar = c(0,0,2,0),
+         addCoef.col = "black")
+```
+
+Estas son las matrices de correlación de las energías renovables a nivel nacional.
+
+```{r}
+library(corrplot)
+
+colores_personalizados <- colorRampPalette(c("#1100FF", "white", "#FF6600"))(200)
+
+renovables <- c("Eólica", "Hidráulica", "Solar fotovoltaica", "Solar térmica", "Otras renovables")
+
+comunidades <- unique(gen_clean$Comunidad)
+anios <- c(2023, 2024)
+
+# Iterar por comunidad y año
+for (com in comunidades) {
+  for (anio in anios) {
+    
+    df_comunidad_anio <- gen_clean %>%
+      filter(
+        Comunidad == com,
+        Energia %in% renovables,
+        year(Fecha) == anio
+      ) %>%
+      mutate(Mes = month(Fecha)) %>%
+      group_by(Mes, Energia) %>%
+      summarise(Generacion = sum(Generacion, na.rm = TRUE), .groups = "drop") %>%
+      pivot_wider(names_from = Energia, values_from = Generacion)
+    
+    # Seleccionar columnas válidas
+    columnas_validas <- colnames(df_comunidad_anio)[colnames(df_comunidad_anio) %in% renovables]
+    df_filtrado <- df_comunidad_anio[, columnas_validas]
+    
+    # Comprobar desviación estándar
+    columnas_sd_ok <- sapply(df_filtrado, sd, na.rm = TRUE) != 0
+    df_filtrado <- df_filtrado[, columnas_sd_ok]
+    
+    if (ncol(df_filtrado) >= 2) {
+      cor_com <- cor(df_filtrado, use = "pairwise.complete.obs")
+      
+      corrplot(cor_com,
+               method = "color",
+               type = "upper",
+               col = colores_personalizados,
+               tl.col = "black",
+               tl.cex = 0.8,
+               title = paste("Correlación en", com, "-", anio),
+               mar = c(0, 0, 1.5, 0),
+               addCoef.col = "black")
+      
+      Sys.sleep(1)
+    } else {
+      message("No hay suficientes energías con variabilidad en ", com, " - ", anio)
+    }
+  }
+}
+
+```
+
+Estas son las matrices de correlación entre las energías renovables de las diferentes comunidades autónomas en 2023 y 2024.
+
+```{r}
+library(sf)
+library(stringr)
+library(viridis)
+
+estaciones <- list(
+  "Invierno (DIC-ENE-FEB)" = c(12, 1, 2),
+  "Primavera (MAR-ABR-MAY)" = 3:5,
+  "Verano (JUN-JUL-AGO)" = 6:8,
+  "Otoño (SEP-OCT-NOV)" = 9:11,
+  "Todo el año" = 1:12
+)
+
+energias_renovables <- c("Eólica", "Solar fotovoltaica", "Solar térmica", "Hidráulica", "Otras renovables")
+
+ui <- fluidPage(
+  titlePanel("Generación Renovable por Comunidad y Estación"),
+  sidebarLayout(
+    sidebarPanel(
+      selectInput("año", "Selecciona el año:", choices = NULL),
+      selectInput("trimestre", "Selecciona la estación:", choices = names(estaciones)),
+      selectInput("energia", "Selecciona energía:", choices = c("Total Renovables", energias_renovables))
+    ),
+    mainPanel(
+      plotOutput("mapa")
+    )
+  )
+)
+
+server <- function(input, output, session) {
+
+  gen <- read.csv("generacion_todas_comunidades.csv") # o tu origen real
+  gen <- gen %>%
+    filter(variable %in% energias_renovables) %>%
+    rename(Energia = variable, Comunidad = comunidad, Generacion = valor, Fecha = fecha) %>%
+    mutate(
+      Fecha = ymd(Fecha),
+      año = year(Fecha),
+      mes = month(Fecha),
+      comunidad = tolower(Comunidad) #stringr
+    )
+
+  nombre_normalizado <- c(
+    "andalucia" = "Andalucía", "aragon" = "Aragón", "asturias" = "Principado de Asturias",
+    "cantabria" = "Cantabria", "castillalamancha" = "Castilla-La Mancha",
+    "castillayleon" = "Castilla y León", "cataluna" = "Cataluña",
+    "comunidadvalenciana" = "Comunidad Valenciana", "extremadura" = "Extremadura",
+    "galicia" = "Galicia", "islasbaleares" = "Islas Baleares",
+    "islascanarias" = "Canarias", "larioja" = "La Rioja",
+    "madrid" = "Comunidad de Madrid", "murcia" = "Región de Murcia",
+    "navarra" = "Comunidad Foral de Navarra", "pais vasco" = "País Vasco"
+  )
+
+  mapa_ccaa <- st_as_sf(mapa_ccaa) #agrupo como variable sf
+
+  observe({
+    updateSelectInput(session, "año", choices = sort(unique(gen$año)))
+  })
+
+  output$mapa <- renderPlot({
+    meses <- estaciones[[input$trimestre]]
+
+    datos_filtrados <- gen %>%
+      filter(año == input$año, mes %in% meses)
+
+    if (input$energia == "Total Renovables") {
+      datos_agg <- datos_filtrados %>%
+        group_by(comunidad) %>%
+        summarise(generacion_renovable_total = sum(Generacion, na.rm = TRUE), .groups = "drop")
+    } else {
+      datos_agg <- datos_filtrados %>%
+        filter(Energia == input$energia) %>%
+        group_by(comunidad) %>%
+        summarise(generacion_renovable_total = sum(Generacion, na.rm = TRUE), .groups = "drop")
+    }
+
+    datos_agg <- datos_agg %>%
+      mutate(NAME_1 = nombre_normalizado[comunidad])
+
+    mapa_datos <- mapa_ccaa %>%
+      left_join(datos_agg, by = "NAME_1")
+
+    ggplot(mapa_datos) +
+      geom_sf(aes(fill = generacion_renovable_total), color = "white") +
+      scale_fill_viridis_c(option = "C", name = "Generación (MWh)", direction = -1, na.value = "gray90") +
+      labs(
+        title = paste("Generación de", input$energia, "en", input$año, "-", input$trimestre),
+        caption = "Fuente: Datos balance energético + elaboración propia"
+      ) +
+      theme_minimal()
+  })
+}
+
+shinyApp(ui = ui, server = server)
+```
+
+En esta aplicación podemos ver la producción de las diferentes energías renovables en el mapa de España desglosada por estación del año y año.
+
