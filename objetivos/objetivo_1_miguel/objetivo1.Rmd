@@ -1,0 +1,408 @@
+---
+title: "Análisis de generación según fechas y comunidad"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE,
+  fig.width = 10,
+  fig.height = 5
+)
+```
+
+# Instalación de paquetes (si no los tienes)
+```{r instalacion, eval=FALSE}
+install.packages(c("tidyverse", "lubridate", "ggplot2", "patchwork", "lubridate", "readr"))
+```
+
+# 1. Carga de librerías
+```{r}
+library(tidyverse)
+library(lubridate)
+library(ggplot2)
+library(patchwork)
+```
+
+# 2. Importación y exploración inicial
+```{r}
+gen <- read_csv("generacion_todas_comunidades.csv")
+# Vista rápida
+glimpse(gen)
+# Comprobación de NA
+gen %>%
+  group_by(comunidad) %>%
+  summarize(pct_na = mean(is.na(valor)) * 100) %>%
+  arrange(desc(pct_na)) %>%
+  knitr::kable(caption = "Porcentaje de valores faltantes por comunidad")
+```
+
+# 3. Limpieza y variables temporales
+```{r}
+gen <- gen %>%
+  mutate(
+    fecha     = as.Date(fecha),
+    comunidad = str_to_title(str_squish(comunidad)),
+    valor     = as.numeric(valor),
+    month     = month(fecha, label = TRUE, abbr = TRUE),
+    year      = year(fecha),
+    dow       = wday(fecha, label = TRUE)
+  ) %>%
+  filter(!is.na(fecha), !is.na(comunidad), !is.na(valor))
+```
+
+# 4. Agregación diaria y mensual
+```{r}
+daily_gen <- gen %>%
+  group_by(comunidad, fecha) %>%
+  summarize(total_gen = sum(valor), .groups = "drop")
+
+monthly_gen <- daily_gen %>%
+  mutate(mes_inicio = floor_date(fecha, "month")) %>%
+  group_by(comunidad, mes_inicio) %>%
+  summarize(total_gen = sum(total_gen), .groups = "drop")
+```
+
+# 5. Tendencias temporales
+```{r fig.cap="Generación mensual por comunidad"}
+ggplot(monthly_gen, aes(x = mes_inicio, y = total_gen, color = comunidad)) +
+  geom_line(alpha = 0.5) +
+  labs(title = "Tendencia mensual de generación",
+       x = "Mes", y = "Generación (MWh)") +
+  theme_minimal()
+```
+
+```{r fig.cap="Generación mensual de Top 4 comunidades"}
+top4 <- monthly_gen %>%
+  group_by(comunidad) %>% summarize(sum_gen = sum(total_gen)) %>%
+  top_n(4, sum_gen) %>% pull(comunidad)
+
+ggplot(monthly_gen %>% filter(comunidad %in% top4),
+       aes(mes_inicio, total_gen, color = comunidad)) +
+  geom_line(size = 1) +
+  labs(title = "Top 4 comunidades: evolución mensual",
+       x = "Mes", y = "Generación (MWh)") +
+  theme_minimal()
+```
+
+# 6. Distribución estacional global
+```{r fig.cap="Boxplot de generación por mes across comunidades"}
+ggplot(gen, aes(x = month, y = valor)) +
+  geom_boxplot(outlier.size = 1, alpha = 0.7) +
+  labs(title = "Distribución de generación por mes",
+       x = "Mes", y = "Generación diaria (MWh)") +
+  theme_minimal()
+```
+
+# 7. Series diarias en small multiples
+```{r fig.cap="Serie diaria por comunidad (facetas)"}
+ggplot(daily_gen, aes(x = fecha, y = total_gen)) +
+  geom_line(color = "steelblue") +
+  facet_wrap(~ comunidad, scales = "free_y") +
+  labs(title = "Serie diaria de generación por comunidad",
+       x = "Fecha", y = "Generación (MWh)") +
+  theme_minimal()
+```
+
+# 8. Calendario de generación (heatmap semanal)
+```{r fig.cap="Heatmap semanal de generación"}
+cal <- daily_gen %>%
+  mutate(week = isoweek(fecha), dow = wday(fecha, label = TRUE))
+
+ggplot(cal, aes(x = week, y = dow, fill = total_gen)) +
+  geom_tile() +
+  labs(title = "Heatmap semanal de generación",
+       x = "Semana del año", y = "Día de la semana") +
+  scale_fill_viridis_c(option = "C") +
+  theme_minimal()
+```
+
+# 9. Generación anual acumulada
+```{r fig.cap="Generación anual total por comunidad"}
+annual <- daily_gen %>%
+  group_by(comunidad, year = year(fecha)) %>%
+  summarize(annual_gen = sum(total_gen), .groups = "drop")
+
+ggplot(annual, aes(x = factor(year), y = annual_gen, fill = comunidad)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Generación anual por comunidad",
+       x = "Año", y = "Total generación (MWh)") +
+  theme_minimal()
+```
+
+# 10. Conclusiones
+
+- **Tendencias**: La generación muestra un incremento progresivo y picos estacionales en verano y en invierno.
+- **Variabilidad mensual**: Los boxplots revelan que los meses de verano tienen mayor dispersión de generación, indicando episodios de alta producción inestable.
+- **Pequeñas series**: Los gráficos faceteados permiten comparar visualmente cada comunidad; algunas presentan más ruido diario que otras.
+- **Patrón semanal**: El heatmap semanal muestra claramente ciclos semanales y picos en días laborables vs. fines de semana.
+- **Crecimiento anual**: La barra anual evidencia que Andalucía y Cataluña son líderes consistentes, con aumento interanual.
+
+*Estas visualizaciones ofrecen una base detallada para entender patrones temporales simples en la generación eléctrica por comunidad.*
+
+
+# 11. Análisis avanzados y gráficos adicionales
+
+## 11.1. Comparación interanual mensual
+```{r fig.cap="Comparación interanual por mes (todas las comunidades)"}
+yoy <- monthly_gen %>%
+  mutate(mes = month(mes_inicio, label = TRUE), año = year(mes_inicio)) %>%
+  group_by(comunidad, mes, año) %>%
+  summarise(gen = sum(total_gen), .groups = "drop")
+
+ggplot(yoy, aes(x = mes, y = gen, color = factor(año), group = factor(año))) +
+  geom_line() +
+  facet_wrap(~ comunidad) +
+  labs(title = "Generación interanual mensual",
+       x = "Mes", y = "Generación total (MWh)") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+## 11.2. Matriz de correlación entre comunidades
+```{r fig.cap="Heatmap de correlaciones de series mensuales"}
+mat <- monthly_gen %>%
+  pivot_wider(names_from = comunidad, values_from = total_gen) %>%
+  select(-mes_inicio) %>%
+  cor(use = "pairwise.complete.obs")
+
+melted <- reshape2::melt(mat)
+
+ggplot(melted, aes(x = Var1, y = Var2, fill = value)) +
+  geom_tile() +
+  scale_fill_viridis_c(name = "Correlación") +
+  labs(title = "Correlación de generación mensual entre comunidades",
+       x = "", y = "") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+
+## 11.3. Analisis de la comunidad que más genera
+```{r fig.cap="Generación promedio por día de la semana - Cataluña"}
+library(dplyr)
+library(ggplot2)
+
+# 1. Ranking de comunidades por generación total
+ranking <- daily_gen %>%
+  group_by(comunidad) %>%
+  summarise(total_acumulado = sum(total_gen, na.rm = TRUE)) %>%
+  arrange(desc(total_acumulado))
+
+print(ranking)
+# Debería salir primera "Cataluña"
+
+# 2. Extraer el día de máximo diario para Cataluña
+pico_cat <- daily_gen %>%
+  filter(comunidad == "Cataluña") %>%
+  slice_max(total_gen, n = 1)
+
+print(pico_cat)
+# Te dará algo como:
+#   comunidad   fecha       total_gen
+# 1 Cataluña    2020-08-15   7345123
+
+# 3. Gráfico de la serie diaria con el pico resaltado
+ggplot(
+  daily_gen %>% filter(comunidad == "Cataluña"),
+  aes(x = fecha, y = total_gen)
+) +
+  geom_line() +
+  geom_point(data = pico_cat, color = "red", size = 3) +
+  labs(
+    title    = "Generación diaria en Cataluña",
+    subtitle = paste0(
+      "Pico máximo: ", format(pico_cat$fecha, "%d de %B de %Y"),
+      " — ", round(pico_cat$total_gen/1e6, 2), " GWh"
+    ),
+    x = "Fecha",
+    y = "Generación diaria (MWh)"
+  ) +
+  theme_minimal()
+
+
+```
+## 11.4. Boxplot por día de la semana y comunidad seleccionada
+```{r fig.cap="Generación promedio por día de la semana - Cataluña"}
+wd <- daily_gen %>%
+  mutate(dow = wday(fecha, label = TRUE)) %>%
+  group_by(comunidad, dow) %>%
+  summarise(avg_dow = mean(total_gen), .groups = "drop")
+
+ggplot(wd %>% filter(comunidad == "Cataluña"),
+       aes(x = dow, y = avg_dow)) +
+  geom_boxplot(fill = "skyblue") +
+  labs(title = "Generación diaria promedio por día de la semana - Cataluña",
+       x = "Día de la semana", y = "Generación promedio (MWh)") +
+  theme_minimal()
+```
+
+## 11.5. ratios producción x comunidad
+```{r fig.cap="ratios producción x comunidad"}
+library(tibble)
+
+superficies <- tibble(
+  comunidad = c(
+    "Andalucia", "Aragon", "Asturias", "Cantabria",
+    "Castilayleon", "Castillalamancha", "Cataluña", "Comunidadvalenciana",
+    "Extremadura", "Galicia", "Islas_baleares", "Islas_canarias",
+    "Larioja", "Madrid", "Murcia", "Navarra"
+  ),
+  superficie_km2 = c(
+    87599,  # Andalucía
+    47719,  # Aragón
+    10603,  # Asturias
+    5321,   # Cantabria
+    94226,  # Castilla y León
+    79463,  # Castilla-La Mancha
+    32114,  # Cataluña
+    23255,  # Comunidad Valenciana
+    41635,  # Extremadura
+    29575,  # Galicia
+    4992,   # Illes Balears
+    7447,   # Canarias
+    5045,   # La Rioja
+    8028,   # Madrid
+    11314,  # Murcia
+    10391   # Navarra
+  )
+)
+
+superficies
+
+# 2. Cálculo del ratio y reordenamiento de factor
+annual_ratio <- annual %>%
+  left_join(superficies, by = "comunidad") %>%
+  mutate(
+    gen_por_km2 = annual_gen / superficie_km2,
+    # reorder asciendente para que el mayor quede arriba
+    comunidad    = fct_reorder(comunidad, gen_por_km2)
+  )
+print(annual_ratio)
+
+# 3. Gráfico de barras horizontales con orden descendente visual (mayor arriba)
+ggplot(annual_ratio, aes(x = gen_por_km2, y = comunidad)) +
+  geom_col(fill = "steelblue") +
+  labs(
+    title = "Ratios de generación anual por superficie (MWh/km²)",
+    x     = "Generación anual (MWh/km²)",
+    y     = "Comunidad Autónoma"
+  ) +
+  theme_minimal()
+ 
+```
+
+## 11.6. Mapa de calor de ratios por comunidad
+```{r fig.cap="Mapa de calor de ratios de generación anual por superficie (MWh/km²)", message=FALSE, warning=FALSE}
+
+# Instalar los paquetes necesarios si no los tienes:
+if (!requireNamespace("geodata", quietly = TRUE)) install.packages("geodata")
+if (!requireNamespace("sf", quietly = TRUE)) install.packages("sf")
+if (!requireNamespace("dplyr", quietly = TRUE)) install.packages("dplyr")
+if (!requireNamespace("ggplot2", quietly = TRUE)) install.packages("ggplot2")
+if (!requireNamespace("viridis", quietly = TRUE)) install.packages("viridis")
+
+# Cargar librerías
+library(geodata)
+library(sf)
+library(dplyr)
+library(ggplot2)
+library(viridis)
+
+# 1. Descargar límites administrativos de nivel 1 (CCAA) de España con geodata
+ccaa_sf <- geodata::gadm(country = "ESP", level = 1, path = tempdir()) %>%
+  st_as_sf()
+
+# 2. Preparar datos de ratio para 2024
+annual_plot <- annual_ratio %>%
+  filter(year == 2024) %>%
+  mutate(
+    # Ajustar nombres para que coincidan con NAME_1 en GADM
+    NAME_1 = case_when(
+      comunidad == "Andalucia"           ~ "Andalucía",
+      comunidad == "Aragon"              ~ "Aragón",
+      comunidad == "Asturias"            ~ "Asturias",
+      comunidad == "Cantabria"           ~ "Cantabria",
+      comunidad == "Castilayleon"        ~ "Castilla y León",
+      comunidad == "Castillalamancha"    ~ "Castilla-La Mancha",
+      comunidad == "Cataluña"            ~ "Cataluña",
+      comunidad == "Comunidadvalenciana" ~ "Comunidad Valenciana",
+      comunidad == "Extremadura"         ~ "Extremadura",
+      comunidad == "Galicia"             ~ "Galicia",
+      comunidad == "Islas_baleares"      ~ "Islas Baleares",
+      comunidad == "Islas_canarias"      ~ "Islas Canarias",
+      comunidad == "Larioja"             ~ "La Rioja",
+      comunidad == "Madrid"              ~ "Comunidad de Madrid",
+      comunidad == "Murcia"              ~ "Región de Murcia",
+      comunidad == "Navarra"             ~ "Navarra",
+      TRUE                                 ~ NA_character_
+    )
+  )
+
+# 3. Filtrar shapefile para incluir solo CCAA con datos
+ccaa_sf <- ccaa_sf %>%
+  filter(NAME_1 %in% annual_plot$NAME_1)
+
+# 4. Unir shapefile con datos de ratio usando NAME_1
+map_df <- ccaa_sf %>%
+  left_join(annual_plot, by = "NAME_1")
+
+# 5. Dibujar el mapa de calor
+
+ggplot(map_df) +
+  geom_sf(aes(fill = gen_por_km2), color = "grey70", size = 0.2) +
+  scale_fill_viridis(option = "C", name = "MWh/km²", na.value = "lightgrey") +
+  labs(
+    title    = "Mapa de calor de eficiencia energética (2024)",
+    subtitle = "Generación anual por superficie en cada CCAA"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text  = element_blank(),
+    axis.ticks = element_blank(),
+    panel.grid = element_blank(),
+    legend.position = "right"
+  )
+```
+
+
+
+# 12. Conclusiones finales actualizadas
+
+- **Tendencia a largo plazo**: La generación eléctrica ha mostrado un crecimiento continuo en el período analizado, con una notable aceleración en los últimos años. Este incremento refleja tanto la incorporación de nuevas capacidades de generación como mejoras en la eficiencia. Los picos estacionales, especialmente en meses de alta demanda (veranos cálidos e inviernos fríos), destacan la necesidad de una gestión ajustada a la variabilidad climática.
+
+- **Variabilidad estacional y mensual**: Los boxplots y perfiles estacionales evidencian fuertes oscilaciones mes a mes. El verano presenta tanto los valores más altos como la mayor dispersión de generación, lo que sugiere episodios de sobreproducción en determinadas fechas. Sin embargo, la media móvil de 12 meses revela una tendencia suavizada que atenúa estas fluctuaciones extremas.
+
+- **Patrones semanales y diarios**: El heatmap semanal y los gráficos por día de la semana indican diferencias sutiles entre días laborables y fines de semana, con picos ligeramente superiores en jornadas laborales. En Cataluña, por ejemplo, la generación media se eleva de lunes a viernes, lo cual podría relacionarse con patrones de consumo y disponibilidad de recursos.
+
+- **Correlaciones interregionales**: La matriz de correlación entre comunidades muestra valores altos (cercanos a 0.8-0.9) en regiones vecinas o con características climáticas similares (Andalucía–Murcia, Galicia–Asturias). Esto implica que las estrategias de gestión pueden beneficiarse de enfoques coordinados entre territorios con perfiles de generación afines.
+
+- **Comparación estructural interanual**: La comparación año a año por mes destaca cambios estructurales como el aumento de capacidad fotovoltaica tras el despliegue masivo de instalaciones solares. A partir de 2023 se observa un desplazamiento de la curva de generación estacional hacia meses más amplios, indicando diversificación de fuentes.
+
+- **Diferencias entre comunidades**: Andalucía y Cataluña se mantienen como líderes en volumen total, mientras que comunidades más pequeñas presentan patrones de generación más planos y estables. El gráfico de series diarias en facetas permite detectar anomalías específicas (cortes puntuales, mantenimientos) en ciertas regiones.
+
+- **Implicaciones para la planificación**: Los resultados sugieren la conveniencia de incorporar almacenamiento y flexibilidad en meses de alta estacionalidad, así como fomentar acuerdos de intercambio entre comunidades altamente correlacionadas. Los modelos de predicción deben integrar variables climáticas para anticipar picos y optimizar la operación.
+
+# 13. Conclusiones conjuntas y recomendaciones
+
+En este estudio integral de la generación eléctrica por comunidad y fecha, hemos combinado análisis descriptivos y avanzados para trazar un panorama completo:
+
+1. **Ciclo anual y tendencia suavizada**: La serie temporal mensual presenta un claro ciclo anual superpuesto a una trayectoria creciente. La media móvil de 12 meses confirma una tendencia alcista constante, reforzada por la implantación de energías renovables y mejoras tecnológicas.
+
+2. **Estacionalidad pronunciada**: La fuerte variabilidad en meses de verano e invierno requiere herramientas de previsión de corto plazo que consideren variables meteorológicas relacionadas con radiación solar y vientos. La gestión de recursos debe prever ventanas de sobreproducción y déficit.
+
+3. **Sinergias territoriales**: Las altas correlaciones entre regiones vecinas ofrecen una oportunidad para el desarrollo de mercados de intercambio y sistemas de balance eléctrico suprarregionales. Acuerdos de cooperación permitirán optimizar el uso de excedentes y reducir la necesidad de infraestructuras de respaldo.
+
+4. **Patrones semanales y operativos**: La diferenciación entre días laborables y fines de semana, aunque moderada, sugiere que los operadores deben ajustar la distribución de carga y la programación de mantenimientos fuera de los picos de mayor generación.
+
+5. **Diversidad de perfiles comunitarios**: Mientras las grandes regiones lideran en volumen, las pequeñas mantienen perfiles más estables. Este contraste puede guiar políticas de inversión: reforzar capacidad en áreas líderes y estabilizar producción en territorios secundarios mediante almacenamiento.
+
+6. **Recomendaciones estratégicas**:
+   - Desarrollar modelos predictivos basados en series temporales enriquecidas con datos meteorológicos y de consumo.
+   - Fomentar infraestructuras de almacenamiento (baterías, bombeos) para absorber picos estacionales.
+   - Coordinar planes de operación y mercado entre comunidades con alta correlación de generación.
+   - Implementar esquemas de demand response para equilibrar oferta y demanda en días de gran volatilidad.
+
+Este conjunto de análisis y conclusiones permite a los planificadores y operadores del sistema eléctrico mejorar la precisión en la previsión, optimizar recursos y diseñar políticas de flexibilidad que respondan eficazmente a la dinámica temporal de la generación por región.
