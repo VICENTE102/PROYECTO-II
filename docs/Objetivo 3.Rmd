@@ -1,0 +1,651 @@
+---
+title: "Balance energetico"
+author: "Marc"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r}
+library(readr)
+
+# Cargar archivos
+bal <- read_csv("balance_todas_comunidades.csv", show_col_types = FALSE)
+gen <- read_csv("generacion_todas_comunidades.csv", show_col_types = FALSE)
+```
+
+```{r}
+library(dplyr)
+
+# Ver estructura general
+glimpse(bal)
+
+# Ver nombres únicos de variables energéticas
+unique(bal$variable)
+
+# Ver nombres únicos de comunidades
+unique(bal$comunidad)
+
+# Revisar si hay valores NA y en qué proporción
+summary(bal)
+
+# Contar valores faltantes por variable energética
+bal %>%
+  group_by(variable) %>%
+  summarise(n_total = n(), n_NA = sum(is.na(valor)), porc_NA = mean(is.na(valor))*100) %>%
+  arrange(desc(porc_NA))
+
+```
+```{r}
+library(dplyr)
+
+# Ver estructura general
+glimpse(gen)
+
+# Ver nombres únicos de variables energéticas
+unique(gen$variable)
+
+# Ver nombres únicos de comunidades
+unique(gen$comunidad)
+
+# Revisar si hay valores NA y en qué proporción
+summary(bal)
+
+# Contar valores faltantes por variable energética
+bal %>%
+  group_by(variable) %>%
+  summarise(n_total = n(), n_NA = sum(is.na(valor)), porc_NA = mean(is.na(valor))*100) %>%
+  arrange(desc(porc_NA))
+```
+Estudio indice de autosuficiencia
+
+```{r}
+library(stringr)
+
+gen_filtrado <- gen %>%
+  group_by(comunidad, fecha) %>%
+  summarise(generacion = sum(valor, na.rm = TRUE), .groups = "drop")
+
+
+# Normaliza generación
+gen_filtrado <- gen %>%
+  group_by(comunidad, fecha) %>%
+  summarise(generacion = sum(valor, na.rm = TRUE), .groups = "drop") %>%
+  mutate(
+    comunidad = str_replace_all(tolower(comunidad), "[[:space:]]", ""),
+    fecha = as.Date(fecha)  # fuerza tipo Date
+  )
+
+# Normaliza balance
+bal_filtrado <- bal %>%
+  filter(variable == "Demanda en b.c.") %>%
+  mutate(
+    comunidad = str_replace_all(tolower(comunidad), "[[:space:]]", ""),
+    fecha = as.Date(fecha)  # fuerza tipo Date
+  ) %>%
+  select(comunidad, fecha, demanda = valor)
+
+
+df_final <- left_join(gen_filtrado, bal_filtrado, by = c("comunidad", "fecha")) %>%
+  mutate(indice_autosuficiencia = generacion / demanda)
+
+```
+
+
+```{r}
+df_final %>%
+  filter(!is.na(indice_autosuficiencia), is.finite(indice_autosuficiencia)) %>%
+  group_by(comunidad) %>%
+  summarise(media_autosuficiencia = mean(indice_autosuficiencia)) %>%
+  arrange(desc(media_autosuficiencia))
+
+#muestra la media del indice de autosuficiencia de todos los meses para cada comunidad
+
+```
+```{r}
+library(ggplot2)
+
+df_final %>%
+  filter(!is.na(indice_autosuficiencia), is.finite(indice_autosuficiencia)) %>%
+  group_by(comunidad) %>%
+  summarise(media_autosuficiencia = mean(indice_autosuficiencia)) %>%
+  ggplot(aes(x = reorder(comunidad, media_autosuficiencia), y = media_autosuficiencia)) +
+  geom_col(fill = "steelblue") +
+  coord_flip() +
+  labs(title = "Media del Índice de Autosuficiencia Energética por Comunidad",
+       x = "Comunidad", y = "Generación / Demanda (media mensual)") +
+  theme_minimal()
+
+```
+
+```{r}
+library(ggplot2)
+
+df_final %>%
+  filter(!is.na(indice_autosuficiencia), is.finite(indice_autosuficiencia)) %>%
+  ggplot(aes(x = fecha, y = indice_autosuficiencia, color = comunidad)) +
+  geom_line() +
+  labs(
+    title = "Índice de Autosuficiencia Energética por Comunidad",
+    subtitle = "Generación total / Demanda en barra de central (mensual)",
+    x = "Fecha", y = "Índice de autosuficiencia"
+  ) +
+  theme_minimal()
+
+```
+
+
+
+
+```{r}
+df_final %>%
+  filter(comunidad == "extremadura", !is.na(indice_autosuficiencia), is.finite(indice_autosuficiencia)) %>%
+  ggplot(aes(x = fecha, y = indice_autosuficiencia)) +
+  geom_line(color = "darkgreen", linewidth = 1) +
+  labs(
+    title = "Índice de Autosuficiencia Energética en extremadura",
+    x = "Fecha", y = "Generación / Demanda"
+  ) +
+  theme_minimal()
+
+```
+```{r}
+df_final %>%
+  filter(comunidad == "extremadura") %>%
+  select(fecha, generacion, demanda, indice_autosuficiencia) %>%
+  arrange(fecha)
+
+```
+
+```{r}
+library(geodata)
+library(sf)
+library(dplyr)
+library(ggplot2)
+library(stringr)
+library(viridis)
+
+# Descargar y convertir el mapa a sf
+mapa_ccaa <- geodata::gadm(country = "ESP", level = 1, path = tempdir())
+mapa_ccaa <- sf::st_as_sf(mapa_ccaa)
+
+# Ver nombres disponibles para hacer match con tus datos
+unique(mapa_ccaa$NAME_1)
+
+# Procesar tus datos de autosuficiencia
+media_autosuf <- df_final %>%
+  filter(is.finite(indice_autosuficiencia)) %>%
+  group_by(comunidad) %>%
+  summarise(media_autosuficiencia = mean(indice_autosuficiencia, na.rm = TRUE)) %>%
+  mutate(comunidad = str_replace_all(comunidad, "[[:space:]]", ""),  # limpieza extra
+         comunidad = str_to_lower(comunidad)) %>%
+  mutate(comunidad = case_when(
+    comunidad == "andalucia" ~ "Andalucía",
+    comunidad == "aragon" ~ "Aragón",
+    comunidad == "asturias" ~ "Principado de Asturias",
+    comunidad == "cantabria" ~ "Cantabria",
+    comunidad == "castillalamancha" ~ "Castilla-La Mancha",
+    comunidad == "castillayleon" ~ "Castilla y León",
+    comunidad == "cataluna" ~ "Cataluña",
+    comunidad == "comunidadvalenciana" ~ "Comunidad Valenciana",
+    comunidad == "extremadura" ~ "Extremadura",
+    comunidad == "galicia" ~ "Galicia",
+    comunidad == "islasbaleares" ~ "Islas Baleares",
+    comunidad == "islascanarias" ~ "Canarias",
+    comunidad == "larioja" ~ "La Rioja",
+    comunidad == "madrid" ~ "Comunidad de Madrid",
+    comunidad == "murcia" ~ "Región de Murcia",
+    comunidad == "navarra" ~ "Comunidad Foral de Navarra",
+    comunidad == "paisvasco" ~ "País Vasco",
+    TRUE ~ comunidad
+  ))
+
+# Unir mapa con datos
+mapa_datos <- mapa_ccaa %>%
+  left_join(media_autosuf, by = c("NAME_1" = "comunidad"))
+
+# Pintar el mapa
+ggplot(mapa_datos) +
+  geom_sf(aes(fill = media_autosuficiencia), color = "white") +
+  scale_fill_viridis(name = "Índice de Autosuficiencia", option = "C", direction = -1) +
+  labs(
+    title = "Mapa de Autosuficiencia Energética por Comunidad Autónoma",
+    subtitle = "Media mensual (Generación / Demanda)",
+    caption = "Fuente: Datos REE + Elaboración propia"
+  ) +
+  theme_minimal()
+
+mapa_datos %>%
+  filter(is.na(media_autosuficiencia)) %>%
+  pull(NAME_1)
+
+```
+Cálculo del Índice de Autosuficiencia Energética por Comunidad Autónoma
+
+Objetivo del análisis:
+
+El propósito de este análisis es determinar el nivel de autosuficiencia energética de cada comunidad autónoma en España, entendida como la capacidad de cada región para cubrir su propia demanda energética mediante su generación renovable. Esto permite identificar qué territorios producen más energía de la que consumen (y por tanto pueden exportar), cuáles son autosuficientes y cuáles, en cambio, presentan un déficit estructural de generación.
+Fuentes de datos utilizadas
+
+Para realizar este estudio se ha trabajado con dos conjuntos de datos principales:
+
+    Generación renovable: Incluye la energía generada mensualmente por cada comunidad autónoma a partir de fuentes renovables como hidráulica, solar fotovoltaica, solar térmica y otras renovables.
+
+    Demanda energética: Contiene los datos de consumo energético mensual de cada comunidad autónoma en el mismo periodo.
+
+Ambos conjuntos de datos abarcan los años 2023 y 2024, con periodicidad mensual y desagregación territorial por comunidad autónoma.
+Procesamiento y metodología
+
+En primer lugar, fue necesario unificar y estandarizar los nombres de las comunidades autónomas en ambos conjuntos de datos para garantizar una correcta unión de la información. Esto incluyó la eliminación de espacios y tildes, la conversión a minúsculas y la unificación de denominaciones como "Castilla y León" o "País Vasco".
+
+Una vez normalizados los datos, se procedió a calcular el índice de autosuficiencia energética para cada comunidad autónoma y cada mes. Este índice se define como el cociente entre la energía generada y la energía demandada en un periodo determinado:
+
+Indice de Autosuficiencia=Generacion/Demanda
+
+
+    Índice > 1: Comunidad excedentaria. Produce más energía de la que consume.
+
+    Índice ≈ 1: Comunidad autosuficiente. Su generación y demanda están equilibradas.
+
+    Índice < 1: Comunidad deficitaria. Necesita importar energía de otras regiones.
+
+En la figura  se muestra un mapa coroplético de España en el que se representa, mediante una escala de colores, el valor del índice de autosuficiencia energética medio mensual para cada comunidad autónoma.
+
+El uso del color es fundamental para la interpretación:
+
+    Tonos amarillos representan bajos niveles de autosuficiencia (índices cercanos a 1 o menores), lo que indica una alta dependencia energética externa.
+
+    Tonos naranjas y rojizos indican un nivel medio de autosuficiencia, donde la generación cubre una buena parte de la demanda.
+
+    Tonos morados y azulados oscuros corresponden a regiones altamente autosuficientes, con índices muy superiores a 1, que generan un excedente significativo.
+
+En el ejemplo mostrado, comunidades como Extremadura, Castilla-La Mancha y Castilla y León destacan por su elevado índice de autosuficiencia, debido principalmente a su alta producción renovable (especialmente solar e hidráulica). En cambio, regiones como Madrid, Islas Baleares y Comunidad Valenciana presentan índices más bajos, reflejando una mayor dependencia del sistema eléctrico interconectado nacional.
+
+Este tipo de visualización resulta especialmente útil para identificar patrones regionales, diseñar políticas energéticas descentralizadas y priorizar inversiones en generación o redes en aquellas zonas con mayor déficit estructural.
+
+La comunidad autónoma de Extremadura se sitúa con diferencia como la región más autosuficiente, con un índice medio superior al 12,7. Este valor implica que la generación renovable en Extremadura supera con creces su demanda eléctrica, posicionándola como una exportadora neta de energía limpia. Este comportamiento se explica por su elevado potencial solar, gran capacidad hidráulica y fuerte desarrollo de infraestructuras fotovoltaicas y termosolares.
+
+Tras Extremadura, destacan también Castilla-La Mancha, Aragón, Castilla y León y Galicia, con valores comprendidos entre 3,4 y 5 puntos de autosuficiencia media. Estas comunidades poseen extensas superficies aptas para el desarrollo renovable, y una combinación equilibrada entre energía eólica, solar e hidráulica, permitiéndoles mantener una cobertura energética renovable significativamente elevada.
+
+En el rango medio se encuentran comunidades como Navarra, La Rioja, Asturias, Murcia y Cataluña, con índices entre 1,7 y 2,9. Aunque superan el umbral de autosuficiencia teórica (1.0), sus valores sugieren una cobertura parcial, lo cual implica que aún requieren apoyo externo o no renovable para cubrir parte de su demanda.
+
+En el extremo inferior destacan regiones como Andalucía, Islas Baleares, Comunidad Valenciana, País Vasco, Cantabria y Madrid, con índices por debajo de 1.7. En estos casos, la generación renovable resulta claramente insuficiente para satisfacer su consumo eléctrico, especialmente en Madrid (0.079), la comunidad con menor autosuficiencia del país. Este patrón refleja la alta densidad de población, urbanización y consumo industrial en estas regiones, junto con una capacidad instalada de renovables limitada o mal aprovechada.
+Conclusiones
+
+    Se observan grandes desigualdades territoriales en términos de autosuficiencia renovable, que no se deben únicamente a factores climáticos, sino también a decisiones políticas, planificación energética y presencia de infraestructuras.
+
+    Ninguna comunidad autónoma, salvo Extremadura, alcanza niveles de autosuficiencia renovable holgada, lo que revela que el modelo energético español sigue siendo, en gran medida, dependiente de fuentes externas o no renovables.
+
+    Este análisis pone en valor a las comunidades que generan excedentes limpios, pero también visibiliza la necesidad urgente de que otras regiones inviertan en transición energética, descentralización de la generación y aprovechamiento de su propio potencial renovable.
+
+En conjunto, el mapa de autosuficiencia energética proporciona una herramienta útil para identificar brechas, diseñar estrategias de planificación territorial sostenible y promover la equidad en el acceso a una energía limpia y segura en el conjunto del Estado
+
+
+```{r}
+library(dplyr)
+
+renovables <- gen %>%
+  filter(variable %in% c("Eólica", "Solar fotovoltaica", "Solar térmica", "Hidráulica", "Otras renovables")) %>%
+  mutate(comunidad = tolower(comunidad)) %>%
+  group_by(comunidad, variable) %>%
+  summarise(generacion_total = sum(valor, na.rm = TRUE), .groups = "drop")
+
+
+library(ggplot2)
+
+ggplot(renovables %>% filter(variable == "Eólica"),
+       aes(x = reorder(comunidad, generacion_total), y = generacion_total)) +
+  geom_col(fill = "#F8766D") +
+  coord_flip() +
+  labs(
+    title = "Generación Eólica por Comunidad",
+    x = "Comunidad", y = "Generación (MWh)"
+  ) +
+  theme_minimal()
+
+ggplot(renovables %>% filter(variable == "Solar fotovoltaica"),
+       aes(x = reorder(comunidad, generacion_total), y = generacion_total)) +
+  geom_col(fill = "#00BFC4") +
+  coord_flip() +
+  labs(
+    title = "Generación Solar fotovoltaica por Comunidad",
+    x = "Comunidad", y = "Generación (MWh)"
+  ) +
+  theme_minimal()
+
+ggplot(renovables %>% filter(variable == "Hidráulica"),
+       aes(x = reorder(comunidad, generacion_total), y = generacion_total)) +
+  geom_col(fill = "#FFDE00") +
+  coord_flip() +
+  labs(
+    title = "Generación Hidráulica por Comunidad",
+    x = "Comunidad", y = "Generación (MWh)"
+  ) +
+  theme_minimal()
+
+ggplot(renovables %>% filter(variable == "Otras renovables"),
+       aes(x = reorder(comunidad, generacion_total), y = generacion_total)) +
+  geom_col(fill = "#C77CFF") +
+  coord_flip() +
+  labs(
+    title = "Generación Otras renovables por Comunidad",
+    x = "Comunidad", y = "Generación (MWh)"
+  ) +
+  theme_minimal()
+
+ggplot(renovables %>% filter(variable == "Solar térmica"),
+       aes(x = reorder(comunidad, generacion_total), y = generacion_total)) +
+  geom_col(fill = "#7CAE00") +
+  coord_flip() +
+  labs(
+    title = "Generación Solar térmica por Comunidad",
+    x = "Comunidad", y = "Generación (MWh)"
+  ) +
+  theme_minimal()
+
+
+
+```
+```{r}
+library(dplyr)
+
+renovables <- gen %>%
+  filter(variable %in% c("Eólica", "Solar fotovoltaica", "Solar térmica", "Hidráulica", "Otras renovables")) %>%
+  mutate(comunidad = tolower(comunidad))
+
+renovables_comunidad <- renovables %>%
+  group_by(comunidad) %>%
+  summarise(generacion_renovable_total = sum(valor, na.rm = TRUE)) %>%
+  arrange(desc(generacion_renovable_total))
+
+library(ggplot2)
+
+ggplot(renovables_comunidad, aes(x = reorder(comunidad, generacion_renovable_total), y = generacion_renovable_total)) +
+  geom_col(fill = "darkgreen") +
+  coord_flip() +
+  labs(
+    title = "Generación total de energías renovables por comunidad",
+    x = "Comunidad", y = "Generación renovable (MWh)"
+  ) +
+  theme_minimal()
+```
+
+
+```{r}
+library(stringr)
+
+renovables_total <- renovables %>%
+  group_by(comunidad) %>%
+  summarise(generacion_renovable_total = sum(valor, na.rm = TRUE)) %>%
+  arrange(desc(generacion_renovable_total))
+
+mapa_ccaa <- sf::st_as_sf(mapa_ccaa)
+
+# Normaliza nombres antes de unir
+renovables_total <- renovables_total %>%
+  mutate(comunidad = case_when(
+    comunidad == "andalucia" ~ "Andalucía",
+    comunidad == "aragon" ~ "Aragón",
+    comunidad == "asturias" ~ "Principado de Asturias",
+    comunidad == "cantabria" ~ "Cantabria",
+    comunidad == "castillalamancha" ~ "Castilla-La Mancha",
+    comunidad == "castillayleon" ~ "Castilla y León",
+    comunidad == "cataluna" ~ "Cataluña",
+    comunidad == "comunidadvalenciana" ~ "Comunidad Valenciana",
+    comunidad == "extremadura" ~ "Extremadura",
+    comunidad == "galicia" ~ "Galicia",
+    comunidad == "islasbaleares" ~ "Islas Baleares",
+    comunidad == "islascanarias" ~ "Canarias",
+    comunidad == "larioja" ~ "La Rioja",
+    comunidad == "madrid" ~ "Comunidad de Madrid",
+    comunidad == "murcia" ~ "Región de Murcia",
+    comunidad == "navarra" ~ "Comunidad Foral de Navarra",
+    comunidad == "pais vasco" ~ "País Vasco",
+    TRUE ~ str_to_title(comunidad)
+  ))
+
+# Join con el mapa
+mapa_datos <- mapa_ccaa %>%
+  left_join(renovables_total, by = c("NAME_1" = "comunidad"))
+
+# Pintar
+ggplot(mapa_datos) +
+  geom_sf(aes(fill = generacion_renovable_total), color = "white") +
+  scale_fill_viridis_c(option = "C", name = "Renovable total (MWh)", direction = -1) +
+  labs(
+    title = "Mapa de generación renovable total por comunidad",
+    caption = "Fuente: Datos balance energético + elaboración propia"
+  ) +
+  theme_minimal()
+
+```
+
+```{r}
+# App Shiny: Autosuficiencia por tipo de energía renovable
+library(shiny)
+library(dplyr)
+library(ggplot2)
+library(sf)
+library(stringr)
+library(viridis)
+library(lubridate)
+library(geodata)
+library(readr)
+
+# === Cargar datos ===
+balance <- read_csv("balance_todas_comunidades.csv")
+generacion <- read_csv("generacion_todas_comunidades.csv")
+
+# === Normalizar nombres de comunidad ===
+limpiar_comunidad <- function(df) {
+  df %>%
+    mutate(comunidad = str_replace_all(tolower(comunidad), "[[:space:]]", "")) %>%
+    mutate(comunidad = case_when(
+      comunidad == "andalucia" ~ "Andalucía",
+      comunidad == "aragon" ~ "Aragón",
+      comunidad == "asturias" ~ "Principado de Asturias",
+      comunidad == "cantabria" ~ "Cantabria",
+      comunidad == "castillalamancha" ~ "Castilla-La Mancha",
+      comunidad == "castillayleon" ~ "Castilla y León",
+      comunidad == "cataluna" ~ "Cataluña",
+      comunidad == "comunidadvalenciana" ~ "Comunidad Valenciana",
+      comunidad == "extremadura" ~ "Extremadura",
+      comunidad == "galicia" ~ "Galicia",
+      comunidad == "islasbaleares" ~ "Islas Baleares",
+      comunidad == "islascanarias" ~ "Canarias",
+      comunidad == "larioja" ~ "La Rioja",
+      comunidad == "madrid" ~ "Comunidad de Madrid",
+      comunidad == "murcia" ~ "Región de Murcia",
+      comunidad == "navarra" ~ "Comunidad Foral de Navarra",
+      comunidad == "paisvasco" ~ "País Vasco",
+      TRUE ~ comunidad
+    ))
+}
+
+# === Limpiar y procesar fechas ===
+balance <- balance %>% mutate(fecha = as.Date(fecha)) %>% limpiar_comunidad()
+generacion <- generacion %>% mutate(fecha = as.Date(fecha)) %>% limpiar_comunidad()
+
+# === Calcular demanda total ===
+demanda <- generacion %>%
+  group_by(comunidad, fecha) %>%
+  summarise(demanda = sum(valor, na.rm = TRUE), .groups = "drop")
+
+# === Calcular índice de autosuficiencia por tipo de energía ===
+df_auto <- balance %>%
+  left_join(demanda, by = c("comunidad", "fecha")) %>%
+  mutate(anio = year(fecha),
+         energia = variable,
+         indice_autosuf = valor / demanda) %>%
+  # ⬇️ Filtrar solo energías renovables
+  filter(energia %in% c("Hidráulica", "Solar fotovoltaica", "Solar térmica", "Otras renovables", "Eólica")) %>%
+  group_by(comunidad, anio, energia) %>%
+  summarise(indice_autosuf = mean(indice_autosuf, na.rm = TRUE), .groups = "drop")
+
+# === Cargar mapa de comunidades autónomas ===
+mapa_ccaa <- st_as_sf(geodata::gadm(country = "ESP", level = 1, path = tempdir()))
+
+# === Unir datos al shapefile ===
+auto_energia_sf <- mapa_ccaa %>%
+  left_join(df_auto, by = c("NAME_1" = "comunidad"))
+
+# === UI ===
+ui <- fluidPage(
+  titlePanel("Autosuficiencia por tipo de energía renovable"),
+  sidebarLayout(
+    sidebarPanel(
+      selectInput("energia_input", "Tipo de energía:", 
+                  choices = c("Hidráulica", "Solar fotovoltaica", "Solar térmica", "Otras renovables", "Eólica")),
+      selectInput("anio_input", "Año:", 
+                  choices = sort(unique(df_auto$anio)), selected = max(df_auto$anio))
+    ),
+    mainPanel(
+      plotOutput("mapa")
+    )
+  )
+)
+
+# === SERVER ===
+server <- function(input, output) {
+  datos_filtrados <- reactive({
+    auto_energia_sf %>%
+      filter(energia == input$energia_input,
+             anio == input$anio_input)
+  })
+
+  output$mapa <- renderPlot({
+    ggplot(datos_filtrados()) +
+      geom_sf(aes(fill = indice_autosuf), color = "white") +
+      scale_fill_viridis(name = "Autosuficiencia", option = "C", direction = -1, na.value = "grey90") +
+      labs(
+        title = paste("Índice de autosuficiencia:", input$energia_input),
+        subtitle = paste("Año:", input$anio_input),
+        caption = "Fuente: REE + Elaboración propia"
+      ) +
+      theme_minimal()
+  })
+}
+
+# === Ejecutar app ===
+shinyApp(ui = ui, server = server)
+
+```
+Análisis detallado por tipo de energía renovable
+
+Con el objetivo de profundizar en el análisis de la autosuficiencia energética, se ha desarrollado una aplicación interactiva en R Shiny que permite visualizar y comparar el índice de autosuficiencia para cada una de las principales fuentes de energía renovable por comunidad autónoma. Esta herramienta ofrece una perspectiva más granular, facilitando la identificación de aquellas regiones que presentan un mayor grado de independencia energética en función de la tecnología utilizada.
+
+Para ello, se han considerado únicamente las siguientes fuentes renovables:
+
+    -Hidráulica
+
+    -Solar fotovoltaica
+
+    -Solar térmica
+
+    -Otras renovables
+    
+    -Eólica
+
+A partir de los datos de generación eléctrica por fuente y la demanda energética total de cada comunidad y año, se ha calculado un índice de autosuficiencia renovable definido como:
+
+Indice de autosuficiencia=Generacion de una fuente concreta/Demanda total de la comunidad
+
+
+Este cociente permite evaluar en qué medida una comunidad autónoma podría cubrir su demanda energética únicamente a través de una fuente renovable específica.
+
+El mapa resultante, generado dinámicamente, permite seleccionar tanto el año como el tipo de energía, y visualizar en un único gráfico qué comunidades presentan una mayor autosuficiencia. Aquellas con un índice más alto están más cerca de cubrir su consumo con esa fuente concreta, mientras que las de menor valor son más dependientes de otras tecnologías o de importaciones externas.
+
+Este enfoque desagregado es especialmente útil para:
+
+    Identificar fortalezas regionales por tipo de recurso (por ejemplo, comunidades con fuerte componente hidráulico o solar).
+
+    Valorar el equilibrio entre fuentes renovables y su distribución territorial.
+
+    Detectar oportunidades de mejora o inversión en infraestructuras específicas en función del recurso disponible.
+
+Los mapas obtenidos se incluyen a continuación para facilitar la comparación visual entre tecnologías y comunidades autónomas.
+
+Resultados: Energía Hidráulica
+
+A continuación se muestran los mapas obtenidos para el año 2023 y 2024 considerando únicamente la energía hidráulica como fuente de generación:
+
+    2023: El mapa muestra que las comunidades del norte peninsular, especialmente Galicia, Cantabria y Castilla y León, presentan los índices de autosuficiencia hidráulica más altos del país. Esto     es coherente con su mayor disponibilidad hídrica, recursos fluviales y presencia histórica de centrales hidroeléctricas. En contraste, Andalucía, Región de Murcia y Comunidad Valenciana           muestran valores muy bajos, indicando una fuerte dependencia de otras fuentes para abastecer su demanda eléctrica.
+
+    2024: Se observa una tendencia similar al año anterior, aunque algunas regiones centrales como Castilla-La Mancha incrementan ligeramente su proporción hidráulica. En general, la                  autosuficiencia hidráulica sigue siendo limitada en la mayoría del país, reflejando el carácter estacional e irregular de esta fuente.
+
+Interpretación
+
+El análisis por tipo de energía revela que ninguna comunidad alcanza la autosuficiencia exclusivamente a partir de generación hidráulica. Incluso en los mejores casos, el índice apenas supera el 15%-20% de la demanda. Esto refuerza la necesidad de diversificar las fuentes renovables para avanzar hacia un modelo energético más autosuficiente. Asimismo, destaca la desigualdad territorial en el acceso a recursos hidroeléctricos, lo que implica que las estrategias de transición energética deberán adaptarse a las características geográficas de cada región.
+
+Resultados: Energía Eólica
+
+A continuación se analizan los mapas de autosuficiencia por energía eólica para los años 2023 y 2024:
+
+    2023: Las comunidades de Castilla y León, Galicia, Navarra y Aragón presentan los valores más altos de autosuficiencia eólica, con índices que se aproximan o superan el 25%. Esto se debe a sus condiciones geográficas favorables para el aprovechamiento del viento, así como al despliegue histórico de parques eólicos en estas zonas. En cambio, comunidades como Andalucía, Madrid o Región de Murcia muestran bajos niveles, reflejando su menor implantación de esta fuente o una mayor demanda no cubierta por eólica.
+
+    2024: Se mantiene el liderazgo de las regiones del norte y centro-norte. Se observan pequeñas mejoras en Castilla-La Mancha y Cataluña, mientras que el resto del país presenta estabilidad. Algunas regiones como País Vasco y Galicia se consolidan como referentes en autosuficiencia eólica.
+
+Interpretación
+
+La energía eólica es, junto con la hidráulica, una de las fuentes renovables más consolidadas en España. Los datos confirman que hay comunidades que logran cubrir más del 20%-25% de su demanda eléctrica con esta fuente, especialmente en zonas con alta densidad de parques eólicos. Sin embargo, la autosuficiencia completa no se alcanza en ningún caso, lo que refuerza la necesidad de diversificación renovable. Además, se pone de manifiesto una asimetría territorial significativa, donde regiones del sur presentan aún amplio margen de desarrollo en esta tecnología.
+
+Resultados: Energía Solar Fotovoltaica
+
+A continuación se presentan los resultados para la energía solar fotovoltaica:
+
+    2023: Destacan especialmente Andalucía, Extremadura, Castilla-La Mancha y Murcia, con los mayores niveles de autosuficiencia. Estas regiones alcanzan valores cercanos al 15% gracias a su elevada irradiación solar y a la expansión de instalaciones fotovoltaicas a gran escala. En contraste, las comunidades del norte y el área cantábrica muestran valores muy bajos.
+
+    2024: Se mantiene la misma distribución geográfica, pero con una leve mejora generalizada en las regiones líderes. Comunidad Valenciana y Madrid también reflejan aumentos modestos. La solar fotovoltaica se consolida como la fuente renovable dominante en el sur peninsular.
+
+Interpretación
+
+La energía solar fotovoltaica muestra una distribución geográfica muy marcada, con altas tasas de autosuficiencia en las regiones del sur y baja penetración en el norte. Esto es coherente con la disponibilidad de recurso solar y demuestra que el potencial de expansión sigue siendo alto. Aunque los niveles de autosuficiencia aún no alcanzan valores absolutos, su tendencia es claramente creciente. Esto hace de la fotovoltaica una pieza clave en la estrategia energética para regiones con alta demanda y elevado recurso solar.
+
+Resultados: Energía Solar Térmica
+
+Los mapas de autosuficiencia para esta fuente revelan:
+
+    2023: Únicamente Región de Murcia, Comunidad Valenciana y, en menor medida, Cataluña, registran autosuficiencia solar térmica por encima del 2%-3%. El resto del territorio muestra valores prácticamente nulos.
+
+    2024: La situación es muy similar, con ligeras mejoras en algunas regiones del este y sureste, pero en general los valores se mantienen bajos. La autosuficiencia con solar térmica no supera el 3% en ninguna comunidad.
+
+Interpretación
+
+La solar térmica sigue teniendo un papel marginal en la generación eléctrica, ya que su uso está más orientado a la producción de calor (ACS, climatización, procesos industriales). Esta fuente, aunque técnicamente renovable, no contribuye significativamente a cubrir la demanda eléctrica regional, lo que explica los bajos índices de autosuficiencia. Su potencial podría aumentar si se integran tecnologías de concentración solar o se fomenta su hibridación con almacenamiento térmico.
+
+Resultados: Otras Renovables
+
+Los resultados muestran lo siguiente:
+
+    2023: Únicamente Galicia presenta un valor de autosuficiencia notable (alrededor del 6%-7%), mientras que el resto de comunidades se sitúan por debajo del 2%. Se observa una concentración del uso de estas tecnologías en regiones con fuerte actividad forestal o agroindustrial.
+
+    2024: Se mantienen las diferencias regionales, con Galicia y, en menor medida, Castilla y León, como principales exponentes del uso de otras renovables. El resto de regiones no experimenta variaciones significativas.
+
+Interpretación
+
+Las denominadas "otras renovables" presentan gran potencial a nivel local, pero su implantación a escala regional sigue siendo baja. Están muy vinculadas a sectores concretos como la industria agroforestal, lo que restringe su desarrollo a determinadas zonas. Aunque su aportación al mix es limitada, podrían desempeñar un papel relevante en entornos rurales y economías circulares, especialmente si se integran en modelos de autoconsumo o microrredes.
+
+Conclusión general del estudio de autosuficiencia energética por fuente renovable
+
+El análisis detallado de los índices de autosuficiencia energética por fuente renovable a nivel regional en España ha puesto de manifiesto una realidad compleja, diversa y profundamente territorializada. A través de la combinación de datos de generación y demanda energética, y su visualización cartográfica mediante una aplicación interactiva desarrollada en Shiny, ha sido posible identificar los desequilibrios y patrones clave que caracterizan la sostenibilidad del sistema energético español en su dimensión renovable.
+
+En primer lugar, ninguna comunidad autónoma alcanza la autosuficiencia energética total mediante una sola fuente renovable, lo que pone de manifiesto la imposibilidad de una dependencia exclusiva de un recurso, por abundante que sea. La autosuficiencia es un fenómeno parcial, altamente dependiente de factores como la disponibilidad natural de recursos (sol, viento, agua), el despliegue tecnológico, la infraestructura eléctrica y la demanda regional.
+
+La energía hidráulica muestra una clara concentración en las regiones del norte, con valores máximos en Galicia, Cantabria y Castilla y León. Su irregularidad estacional y su dependencia de la hidrología la hacen poco fiable como pilar exclusivo.
+
+La energía eólica ofrece una mayor penetración y mejores ratios de autosuficiencia, especialmente en Castilla y León, Galicia, Navarra o Aragón. Sin embargo, sigue siendo insuficiente por sí sola y revela fuertes contrastes entre comunidades.
+
+En cuanto a la energía solar fotovoltaica, los resultados evidencian el liderazgo del sur peninsular: Andalucía, Extremadura, Castilla-La Mancha y Murcia muestran una gran ventaja comparativa. Este recurso se perfila como clave para avanzar hacia modelos autosuficientes en regiones con alta irradiación solar.
+
+La solar térmica y las otras renovables (como biomasa o biogás) tienen un papel muy limitado en la generación eléctrica. Sus índices de autosuficiencia son residuales, lo que confirma que su impacto sigue siendo marginal en el mix energético nacional, aunque pueden ser útiles a pequeña escala y en aplicaciones específicas.
+
+En conjunto, este estudio confirma que la autosuficiencia renovable regional es altamente desigual y dependiente del tipo de recurso. Algunas comunidades presentan claros avances y potencial (Castilla y León, Galicia, Extremadura), mientras que otras todavía dependen en gran medida de fuentes no renovables o importadas. Esta disparidad refuerza la necesidad de:
+
+    Fomentar la diversificación tecnológica para equilibrar las limitaciones de cada fuente.
+
+    Diseñar políticas energéticas adaptadas al perfil de cada comunidad.
+
+    Promover el desarrollo de redes inteligentes y almacenamiento para gestionar la intermitencia y excedentes.
+
+    Impulsar el autoconsumo y la generación distribuida, especialmente en regiones con baja autosuficiencia.
+
+En definitiva, la autosuficiencia energética es un objetivo viable solo si se aborda de forma integrada, combinando múltiples fuentes renovables y adaptando las estrategias a las características territoriales de cada comunidad. Este estudio constituye una herramienta valiosa para identificar fortalezas, debilidades y oportunidades en la transición energética hacia un modelo más resiliente, sostenible y descentralizado.
