@@ -1,0 +1,495 @@
+---
+title: "Objetivo_Específico"
+author: "Pablo Alpuente"
+date: "2025-05-19"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r}
+library(dplyr) #Manipulación de datos (filtrar, agrupar, resumir, unir)
+library(ggplot2) #Visualización de datos con gráficos profesionales
+library(readr) #Lectura rápida y limpia de archivos CSV
+library(stringr) #Manejo de texto y expresiones regulares (ej. limpiar paréntesis)
+library(tidyr) #Transformar y reorganizar datos (ej. pivotar) ->  trazado ambas variables como series separadas con leyendas limpias en ggplot2
+library(jsonlite) #Leer y escribir archivos JSON
+library(corrplot) #Visualización de matrices de correlación
+library(scales) #Escalas y transformaciones para gráficos
+```
+
+
+```{r}
+# Cargar datos de generación por comunidad
+df_comunidades <- read_csv("data/generacion_todas_comunidades.csv")
+
+# Filtrar solo energía hidráulica
+df_hidraulica_comunidades <- df_comunidades %>%
+  filter(variable == "Hidráulica")
+
+# Agrupar por comunidad y calcular la suma total de energía hidráulica
+df_comunidades_hidraulica <- df_hidraulica_comunidades %>%
+  group_by(comunidad) %>%
+  summarise(total_hidraulica = sum(valor, na.rm = TRUE)) %>%
+  arrange(desc(total_hidraulica))
+
+# Visualizar en gráfico de barras
+ggplot(df_comunidades_hidraulica, aes(x = reorder(comunidad, -total_hidraulica), y = total_hidraulica)) +
+  geom_bar(stat = "identity", fill = "steelblue") +
+  labs(title = "Producción total de energía hidráulica por comunidad",
+       x = "Comunidad Autónoma",
+       y = "Total energía hidráulica (GWh)") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+```{r}
+ggplot(df_hidraulica_comunidades, aes(x = reorder(comunidad, valor, median, na.rm = TRUE), y = valor)) +
+  geom_boxplot(fill = "lightblue", outlier.color = "red") +
+  labs(title = "Distribución mensual de energía hidráulica por comunidad",
+       x = "Comunidad Autónoma",
+       y = "Energía hidráulica (GWh)") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+Tras realizar un análisis exploratorio de la generación hidráulica por comunidad autónoma en España, observamos que Galicia es la comunidad con mayor producción total de energía hidráulica durante el periodo analizado. Esta región destaca tanto por la abundancia de precipitaciones como por la existencia de numerosos embalses y recursos hidrográficos aprovechables para la generación de electricidad.
+
+Para llevar a cabo el cruce con los datos meteorológicos, ha sido necesario seleccionar una estación meteorológica representativa, ya que la AEMET no ofrece datos agregados a nivel autonómico. En este caso, se ha optado por utilizar los registros correspondientes a la provincia de A Coruña, que forma parte de Galicia y cuenta con un clima atlántico húmedo, caracterizado por precipitaciones abundantes y repartidas durante todo el año. Esto la convierte en un territorio idóneo para analizar la influencia de la lluvia sobre la producción hidráulica.
+
+La elección de Galicia (y concretamente A Coruña) se justifica, por tanto, por:
+
+- Su peso significativo en la generación hidráulica a nivel nacional.
+- La alta disponibilidad de datos meteorológicos con buena calidad y sin valores ausentes.
+- Su relevancia climática, ya que permite observar de forma clara la relación entre las precipitaciones mensuales y la producción energética derivada de ellas.
+
+Para el análisis de la relación entre precipitaciones y generación hidráulica en Galicia, se ha seleccionado la estación meteorológica A Coruña Aeropuerto (código AEMET: 1387E). Esta estación ha sido elegida por los siguientes motivos:
+
+- Es una de las estaciones principales de la provincia de A Coruña, con cobertura continua y datos históricos de alta calidad.
+- Su localización geográfica y climática es representativa del clima atlántico húmedo predominante en Galicia, caracterizado por precipitaciones regulares y abundantes.
+- Se encuentra en una zona con presencia de embalses e infraestructura hidroeléctrica en el entorno, lo que refuerza su idoneidad para este análisis.
+
+```{r}
+# Rutas a los JSON descargados
+ruta_2023 <- "data/aemet/GALICIA/2023.json"
+ruta_2024 <- "data/aemet/GALICIA/2024.json"
+
+# Cargar y convertir a data frame
+datos_2023 <- fromJSON(ruta_2023)
+datos_2024 <- fromJSON(ruta_2024)
+
+df_2023 <- as.data.frame(datos_2023, stringsAsFactors = FALSE)
+df_2024 <- as.data.frame(datos_2024, stringsAsFactors = FALSE)
+
+# Convertir la columna 'fecha' al formato Date
+df_2023 <- df_2023 %>% mutate(fecha = as.Date(paste0(fecha, "-01")))
+df_2024 <- df_2024 %>% mutate(fecha = as.Date(paste0(fecha, "-01")))
+
+# Ordenar por fecha
+df_2023 <- arrange(df_2023, fecha)
+df_2024 <- arrange(df_2024, fecha)
+
+print(df_2023)
+print(df_2024)
+```
+
+Clásico error en los datos de AEMET: aparece un registro con fecha = 2023-13-01 o 2024-13-01, lo cual es un valor inválido ya que no existe el mes 13. Este tipo de entrada suele ser un resumen anual agregado, no un mes real.
+```{r}
+# Eliminar la ultima fila de ambos datasets
+df_2023 <- df_2023[-nrow(df_2023), ]
+df_2024 <- df_2024[-nrow(df_2024), ]
+```
+
+🧾 Justificación técnica: eliminación del día entre paréntesis
+En los datos meteorológicos proporcionados por la AEMET, muchas variables extremas mensuales (como p_max, ta_max, ta_min, etc.) incluyen entre paréntesis el día del mes en que ese valor se registró, por ejemplo:
+p_max = "20.9(19)", lo que indica que la precipitación máxima fue de 20.9 mm y se produjo el día 19 del mes.
+
+Para el análisis técnico planteado en este proyecto —centrado en estudiar la relación entre variables climáticas y generación energética a nivel mensual—, hemos optado por descartar el valor del día ya que el estudio se realiza a escala mensual, tanto para los datos climáticos como para los energéticos. Conservar el día exacto de un evento puntual no aporta valor adicional a este nivel de análisis.
+
+```{r}
+# Función para limpiar los valores con paréntesis
+limpiar_valor <- function(x) {
+  as.numeric(str_extract(x, "^[0-9.]+"))
+}
+
+# Aplicar limpieza a todas las columnas menos fecha e indicativo
+columnas_a_limpiar <- setdiff(names(df_2023), c("fecha", "indicativo"))
+df_2023[columnas_a_limpiar] <- lapply(df_2023[columnas_a_limpiar], limpiar_valor)
+df_2024[columnas_a_limpiar] <- lapply(df_2024[columnas_a_limpiar], limpiar_valor)
+
+# Unir ambos años y guardar el combinado
+df_clima_coruna <- bind_rows(df_2023, df_2024) %>%
+  arrange(fecha)
+
+write_csv(df_clima_coruna, "data/aemet/GALICIA/clima_coruna.csv")
+```
+Variables AEMET	- Hidráulica
+
+- p_mes	Precipitación total del mes (mm)Es la principal fuente de agua en embalses y ríos.
+- n_llu	Nº de días con lluvia	Muestra la persistencia del agua en el mes.
+- np_010	Nº de días con >10 mm	Lluvias moderadas a intensas (útiles para embalses).
+- np_100	Nº de días con >100 mm	Lluvias muy fuertes, pueden causar picos hidráulicos.
+- p_max	Precipitación máxima en un día	Relacionada con eventos puntuales de caudal alto.
+- np_300	Nº de días con >300 mm	Muy inusual, pero si existe, probablemente impacta la hidráulica.
+
+Ahora que tenemos listo el dataset limpio de clima para A Coruña (Galicia), vamos a hacer un pequeño análisis exploratorio para entender cómo se comporta el tiempo en Galicia en términos de precipitaciones y otras variables clave.
+
+```{r}
+df_clima <- read_csv("data/aemet/GALICIA/clima_coruna.csv", show_col_types = FALSE)
+ggplot(df_clima, aes(x = fecha, y = p_mes)) +
+  geom_line(color = "blue") +
+  geom_point(color = "darkblue") +
+  scale_x_date(date_labels = "%b %Y", date_breaks = "1 month") +
+  labs(title = "Precipitación mensual en A Coruña",
+       x = "Mes", y = "Precipitación (mm)") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+```{r}
+ggplot(df_clima, aes(x = fecha, y = n_llu)) +
+  geom_col(fill = "steelblue") +
+  scale_x_date(date_labels = "%b %Y", date_breaks = "1 month") +
+  labs(title = "Número de días de lluvia por mes en A Coruña",
+       x = "Mes", y = "Días de lluvia") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+### Union datos
+
+```{r}
+#combinar datos df_clima por fecha con df_hidraulica_comunidades
+df_clima <- read_csv("data/aemet/GALICIA/clima_coruna.csv", show_col_types = FALSE)
+df_comunidades <- read_csv("data/generacion_todas_comunidades.csv")
+
+# Filtrar solo hidráulica y Galicia
+df_hidraulica_galicia <- df_comunidades %>%
+  filter(variable == "Hidráulica", comunidad == "Galicia") %>%
+  select(fecha, energia_hidraulica = valor)
+# Unir datasets por fecha
+df_merged <- df_clima %>%
+  inner_join(df_hidraulica_galicia, by = "fecha")
+
+# Verificar que ha funcionado
+print(df_merged)
+```
+
+🎯 Objetivo
+
+Estudiar si existe una relación técnica entre la lluvia (precipitación) y la energía hidráulica generada en Galicia, usando datos reales de AEMET y REE (2023–2024).
+
+```{r}
+# Correlación básica
+cor.test(df_merged$p_mes, df_merged$energia_hidraulica, method = "spearman")
+cor.test(df_merged$n_llu, df_merged$energia_hidraulica, method = "spearman")
+cor.test(df_merged$np_010, df_merged$energia_hidraulica, method = "spearman")
+cor.test(df_merged$p_max, df_merged$energia_hidraulica, method = "spearman")
+```
+
+```{r}
+# Correlación básica
+
+df_cor <- df_merged %>%
+  select(p_mes, n_llu, np_010, p_max, energia_hidraulica)
+
+cor_matrix <- cor(df_cor, use = "complete.obs", method = "spearman")
+corrplot(cor_matrix, method = "color", type = "upper", tl.col = "black")
+
+```
+1. Resumen del resultado estadístico
+Se ha aplicado el coeficiente de correlación de rangos de Spearman entre la precipitación mensual total (p_mes) y la energía hidráulica generada en Galicia (energia_hidraulica), obteniendo un valor de rho = 0.75 con un p-valor < 0.001.
+Esto indica una correlación positiva fuerte y estadísticamente significativa, lo que sugiere que los meses con mayor precipitación tienden a coincidir con una mayor producción hidráulica.
+
+2. Justificación del uso de Spearman
+Se ha utilizado Spearman en lugar de Pearson ya que los datos no presentan una distribución perfectamente normal y la relación entre variables puede no ser lineal estricta, sino monótonamente creciente.
+
+3. Visualización profesional: mapa de correlaciones
+El heatmap confirma que las precipitaciones acumuladas mensualmente (p_mes) y las lluvias significativas (np_010) son las mejores variables climáticas para explicar la variación en la energía hidráulica. Otras variables, como el número de días de lluvia (n_llu) o eventos extremos puntuales (p_max), tienen menor impacto correlacional.
+
+
+La producción de energía hidráulica depende directamente del caudal disponible en los embalses, y este está influenciado a su vez por el volumen total de precipitaciones mensuales. La fuerte correlación detectada en Galicia —una comunidad con alta capacidad hidroeléctrica— valida esta dependencia directa.
+Variables como el número de días con lluvia (n_llu) o el número de días con precipitaciones superiores a 10 mm (np_010) también muestran correlaciones positivas relevantes, aunque ligeramente menores.
+
+```{r, fig.width=14, fig.height=6}
+
+# Escala de transformación para doble eje
+factor_escala <- max(df_merged$energia_hidraulica, na.rm = TRUE) / max(df_merged$p_mes, na.rm = TRUE)
+
+# Crear dataframe largo para facilitar la leyenda
+df_plot <- df_merged %>%
+  select(fecha, energia_hidraulica, p_mes) %>%
+  mutate(p_mes_escalado = p_mes * factor_escala) %>%. #escalado
+  select(fecha, energia_hidraulica, p_mes_escalado) %>%
+  pivot_longer(cols = c("energia_hidraulica", "p_mes_escalado"),
+               names_to = "variable",
+               values_to = "valor")
+
+# Etiquetas más legibles
+df_plot$variable <- recode(df_plot$variable,
+                           "energia_hidraulica" = "Energía hidráulica (GWh)",
+                           "p_mes_escalado" = "Precipitación mensual (mm)")
+
+# Gráfico con leyenda
+ggplot(df_plot, aes(x = fecha, y = valor, color = variable, linetype = variable)) +
+  geom_line(size = 1.2) +
+  scale_color_manual(values = c("Energía hidráulica (GWh)" = "darkblue",
+                                "Precipitación mensual (mm)" = "darkgreen")) +
+  scale_linetype_manual(values = c("Energía hidráulica (GWh)" = "solid",
+                                   "Precipitación mensual (mm)" = "dashed")) +
+  scale_y_continuous(
+    name = "Energía hidráulica (GWh)",
+    sec.axis = sec_axis(~ . / factor_escala, name = "Precipitación mensual (mm)")
+  ) +
+  scale_x_date(date_labels = "%b %Y", date_breaks = "1 month") +
+  labs(title = "Relación mensual entre energía hidráulica y precipitación en Galicia",
+       x = "Mes", color = "Variable", linetype = "Variable") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+```
+- 🔍 ¿Qué pasa en ene–mar 2024?
+
+Aunque las precipitaciones bajan (línea verde), la energía hidráulica se mantiene alta (línea azul).
+Esto ocurre porque los embalses estaban ya llenos desde los meses anteriores (nov–dic 2023), que sí fueron muy lluviosos. 
+La energía hidráulica no responde al instante a la lluvia caída, sino al agua embalsada acumulada.
+ 
+- 🔍 ¿Y por qué en sep–oct 2024, aunque sube la precipitación, la hidráulica no sube igual?
+
+Aquí lo más probable es que:
+Los embalses aún estén vacíos tras un verano muy seco (jun–ago 2024).
+El agua caída en septiembre no sea suficiente aún para restablecer niveles de producción (hay un “retraso” en la respuesta).
+Además, parte de esa lluvia puede haber ido a relleno de acuíferos, absorción del terreno o desembalses previos.
+
+Aunque existe una correlación general entre precipitaciones y generación hidráulica, el análisis mensual muestra que el sistema presenta cierta inercia hidrológica, de forma que la producción no responde inmediatamente a cada pico de lluvia. Los meses de enero-marzo de 2024 muestran cómo una alta producción se mantiene tras meses previos muy húmedos, mientras que en septiembre-octubre, el efecto de la lluvia aún no se traduce en generación inmediata.
+
+De forma interactiva con plotly, se puede observar la evolución de ambas variables a lo largo del tiempo, facilitando la identificación de patrones estacionales y tendencias:
+
+```{r, fig.width=14, fig.height=6}
+ggplot_plot <- ggplot(df_merged, aes(x = fecha)) +
+  geom_line(aes(y = energia_hidraulica, color = "Energía hidráulica")) +
+  geom_line(aes(y = p_mes * (max(energia_hidraulica)/max(p_mes)), color = "Precipitación")) +
+  scale_color_manual(values = c("Energía hidráulica" = "darkblue", "Precipitación" = "green")) +
+  labs(title = "Energía hidráulica vs Precipitación - Galicia", x = "Fecha", y = "Escalado") +
+  theme_minimal()
+
+ggplotly(ggplot_plot)
+
+```
+
+
+Aunque el análisis general muestra una correlación positiva entre las precipitaciones mensuales y la generación de energía hidráulica, una observación más detallada revela que esta relación no es lineal ni inmediata.
+
+En concreto, se observa que:
+
+Durante los meses de enero a marzo de 2024, la generación hidráulica se mantiene alta a pesar de una bajada en las precipitaciones, debido al efecto acumulado de lluvias intensas en los meses previos (noviembre y diciembre).
+En septiembre–octubre de 2024, se registran picos de precipitación sin que ello se traduzca en un aumento proporcional de generación, lo que sugiere que el sistema necesita tiempo para recuperar caudal útil, o que ya ha alcanzado su capacidad operativa.
+
+Para reflejar esta realidad, se ha ajustado un modelo de regresión lineal y otro de regresión polinómica de segundo grado:
+
+```{r, fig.width=15, fig.height=6}
+
+# REGRESIÓN LINEAL SIMPLE
+modelo_lineal <- lm(energia_hidraulica ~ p_mes, data = df_merged)
+summary(modelo_lineal)  # Muestra coeficientes, R², p-valores
+
+# REGRESIÓN POLINÓMICA (grado 2)
+modelo_poly <- lm(energia_hidraulica ~ poly(p_mes, 2), data = df_merged)
+summary(modelo_poly)
+
+ggplot(df_merged, aes(x = p_mes, y = energia_hidraulica)) +
+  geom_point(color = "black", size = 3) +
+  stat_smooth(method = "lm", se = FALSE, color = "red", linetype = "dashed") +  # Lineal
+  stat_smooth(method = "lm", formula = y ~ poly(x, 2), se = FALSE, color = "blue") +  # Polinómico
+  labs(title = "Regresión lineal vs polinómica: energía hidráulica vs precipitación",
+       x = "Precipitación mensual (mm)", y = "Energía hidráulica (GWh)") +
+  theme_minimal()
+
+```
+1. Modelo lineal simple
+
+El modelo lineal presenta una relación creciente entre ambas variables, pero con una capacidad explicativa limitada:
+
+R² ajustado: 0.353
+p-valor: 0.0013, lo que indica significancia estadística.
+Los residuos muestran cierta curvatura, lo que sugiere que el modelo no captura bien la forma real de la relación.
+
+2. Modelo polinómico (grado 2)
+
+Para mejorar el ajuste, se aplicó un modelo de regresión polinómica de segundo grado, con los siguientes resultados:
+
+R² ajustado: 0.546, una mejora notable frente al modelo lineal.
+Ambos coeficientes (p_mes y p_mes²) resultaron estadísticamente significativos (p < 0.01).
+El gráfico muestra claramente cómo el modelo polinómico se ajusta mejor al comportamiento de los datos, capturando un efecto de saturación o techo en la producción hidráulica.
+
+El modelo polinómico refleja mejor la realidad física del sistema hidráulico. Inicialmente, más precipitación produce más energía, pero llega un punto donde los embalses están llenos o se limitan por gestión, lo que reduce el efecto marginal del agua caída. Esto se visualiza como una curva creciente que luego se estabiliza o decrece levemente.
+
+De cara a futuras mejoras del modelo, se propone entrenar sobre datos históricos correspondientes al año 2023 y validar con datos del año 2024 (completo o parcial), lo que permitiría evaluar su capacidad predictiva. Este enfoque requiere estructurar los datos en una serie temporal univariante y modelar explícitamente la estacionalidad del sistema, aspecto fundamental dado que el modelo actual no la contempla y, por tanto, no puede anticipar adecuadamente los patrones futuros. Esta metodología permitiría además calcular el error de predicción y disponer así de un modelo de referencia más robusto.
+
+```{r}
+df_merged <- df_merged %>%
+  mutate(mes = lubridate::month(fecha),
+         estacion = case_when(
+           mes %in% c(12, 1, 2) ~ "Invierno",
+           mes %in% c(3, 4, 5) ~ "Primavera",
+           mes %in% c(6, 7, 8) ~ "Verano",
+           mes %in% c(9, 10, 11) ~ "Otoño"
+         ))
+
+ggplot(df_merged, aes(x = estacion, y = energia_hidraulica, fill = estacion)) +
+  geom_boxplot() +
+  labs(title = "Distribución de energía hidráulica por estación en Galicia",
+       x = "Estación", y = "Energía hidráulica (GWh)") +
+  theme_minimal()
+
+```
+Aquí, observamos que el comportamiento estacional de la energía hidráulica en Galicia está claramente condicionado por el régimen climático. Invierno es, con diferencia, la estación más productiva, mientras que en verano la generación hidráulica cae drásticamente. Este patrón coincide con la distribución esperada de precipitaciones en el clima atlántico húmedo gallego.
+
+#### Extensión del análisis a Castilla y León
+
+Tras haber demostrado una relación significativa y técnicamente fundamentada entre la precipitación mensual y la energía hidráulica generada en Galicia, se procede a replicar el análisis sobre otra comunidad con alta producción hidroeléctrica: Castilla y León.
+Esta comparación permite validar si el patrón identificado en Galicia es extrapolable a otras regiones con condiciones climáticas y de generación similares, fortaleciendo así la robustez de las conclusiones obtenidas.
+
+```{r}
+# Rutas a los JSON descargados
+ruta_2023 <- "data/aemet/LEON/2023.json"
+ruta_2024 <- "data/aemet/LEON/2024.json"
+
+# Cargar y convertir a data frame
+datos_2023 <- fromJSON(ruta_2023)
+datos_2024 <- fromJSON(ruta_2024)
+
+df_2023 <- as.data.frame(datos_2023, stringsAsFactors = FALSE)
+df_2024 <- as.data.frame(datos_2024, stringsAsFactors = FALSE)
+
+# Convertir la columna 'fecha' al formato Date
+df_2023 <- df_2023 %>% mutate(fecha = as.Date(paste0(fecha, "-01")))
+df_2024 <- df_2024 %>% mutate(fecha = as.Date(paste0(fecha, "-01")))
+
+# Ordenar por fecha
+df_2023 <- arrange(df_2023, fecha)
+df_2024 <- arrange(df_2024, fecha)
+
+df_2023 <- df_2023[-nrow(df_2023), ]
+df_2024 <- df_2024[-nrow(df_2024), ]
+# Aplicar limpieza a todas las columnas menos fecha e indicativo
+columnas_a_limpiar <- setdiff(names(df_2023), c("fecha", "indicativo"))
+df_2023[columnas_a_limpiar] <- lapply(df_2023[columnas_a_limpiar], limpiar_valor)
+df_2024[columnas_a_limpiar] <- lapply(df_2024[columnas_a_limpiar], limpiar_valor)
+
+# Unir ambos años y guardar el combinado
+df_clima_coruna <- bind_rows(df_2023, df_2024) %>%
+  arrange(fecha)
+
+write_csv(df_clima_coruna, "data/aemet/LEON/clima_leon.csv")
+```
+
+Aplicamos lo mismo que para galicia:
+
+```{r}
+#combinar datos df_clima por fecha con df_hidraulica_comunidades
+df_clima <- read_csv("data/aemet/LEON/clima_leon.csv", show_col_types = FALSE)
+df_comunidades <- read_csv("data/generacion_todas_comunidades.csv")
+
+# Filtrar solo hidráulica y Galicia
+df_hidraulica_galicia <- df_comunidades %>%
+  filter(variable == "Hidráulica", comunidad == "Castillayleon") %>%
+  select(fecha, energia_hidraulica = valor)
+# Unir datasets por fecha
+df_merged <- df_clima %>%
+  inner_join(df_hidraulica_galicia, by = "fecha")
+
+# Verificar que ha funcionado
+print(df_merged)
+```
+
+```{r}
+# Correlación básica
+cor.test(df_merged$p_mes, df_merged$energia_hidraulica, method = "spearman")
+cor.test(df_merged$n_llu, df_merged$energia_hidraulica, method = "spearman")
+cor.test(df_merged$np_010, df_merged$energia_hidraulica, method = "spearman")
+cor.test(df_merged$p_max, df_merged$energia_hidraulica, method = "spearman")
+df_cor <- df_merged %>%
+  select(p_mes, n_llu, np_010, p_max, energia_hidraulica)
+
+cor_matrix <- cor(df_cor, use = "complete.obs", method = "spearman")
+corrplot(cor_matrix, method = "color", type = "upper", tl.col = "black")
+
+```
+```{r, fig.width=14, fig.height=6}
+
+# Escala de transformación para doble eje
+factor_escala <- max(df_merged$energia_hidraulica, na.rm = TRUE) / max(df_merged$p_mes, na.rm = TRUE)
+
+# Crear dataframe largo para facilitar la leyenda
+df_plot <- df_merged %>%
+  select(fecha, energia_hidraulica, p_mes) %>%
+  mutate(p_mes_escalado = p_mes * factor_escala) %>%
+  select(fecha, energia_hidraulica, p_mes_escalado) %>%
+  pivot_longer(cols = c("energia_hidraulica", "p_mes_escalado"),
+               names_to = "variable",
+               values_to = "valor")
+
+# Etiquetas más legibles
+df_plot$variable <- recode(df_plot$variable,
+                           "energia_hidraulica" = "Energía hidráulica (GWh)",
+                           "p_mes_escalado" = "Precipitación mensual (mm)")
+
+# Gráfico con leyenda
+ggplot(df_plot, aes(x = fecha, y = valor, color = variable, linetype = variable)) +
+  geom_line(size = 1.2) +
+  scale_color_manual(values = c("Energía hidráulica (GWh)" = "darkblue",
+                                "Precipitación mensual (mm)" = "darkgreen")) +
+  scale_linetype_manual(values = c("Energía hidráulica (GWh)" = "solid",
+                                   "Precipitación mensual (mm)" = "dashed")) +
+  scale_y_continuous(
+    name = "Energía hidráulica (GWh)",
+    sec.axis = sec_axis(~ . / factor_escala, name = "Precipitación mensual (mm)")
+  ) +
+  scale_x_date(date_labels = "%b %Y", date_breaks = "1 month") +
+  labs(title = "Relación mensual entre energía hidráulica y precipitación en Galicia",
+       x = "Mes", color = "Variable", linetype = "Variable") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+```
+```{r}
+df_merged <- df_merged %>%
+  mutate(mes = lubridate::month(fecha),
+         estacion = case_when(
+           mes %in% c(12, 1, 2) ~ "Invierno",
+           mes %in% c(3, 4, 5) ~ "Primavera",
+           mes %in% c(6, 7, 8) ~ "Verano",
+           mes %in% c(9, 10, 11) ~ "Otoño"
+         ))
+
+ggplot(df_merged, aes(x = estacion, y = energia_hidraulica, fill = estacion)) +
+  geom_boxplot() +
+  labs(title = "Distribución de energía hidráulica por estación en Galicia",
+       x = "Estación", y = "Energía hidráulica (GWh)") +
+  theme_minimal()
+
+```
+
+
+```{r, fig.width=15, fig.height=6}
+# REGRESIÓN LINEAL SIMPLE
+modelo_lineal <- lm(energia_hidraulica ~ p_mes, data = df_merged)
+summary(modelo_lineal)  # Muestra coeficientes, R², p-valores
+
+# REGRESIÓN POLINÓMICA (grado 2)
+modelo_poly <- lm(energia_hidraulica ~ poly(p_mes, 2), data = df_merged)
+summary(modelo_poly)
+
+ggplot(df_merged, aes(x = p_mes, y = energia_hidraulica)) +
+  geom_point(color = "black", size = 3) +
+  stat_smooth(method = "lm", se = FALSE, color = "red", linetype = "dashed") +  # Lineal
+  stat_smooth(method = "lm", formula = y ~ poly(x, 2), se = FALSE, color = "blue") +  # Polinómico
+  labs(title = "Regresión lineal vs polinómica: energía hidráulica vs precipitación",
+       x = "Precipitación mensual (mm)", y = "Energía hidráulica (GWh)") +
+  theme_minimal()
+
+```
