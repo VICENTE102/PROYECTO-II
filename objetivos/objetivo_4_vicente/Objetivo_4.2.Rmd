@@ -1,0 +1,400 @@
+---
+title: "Objetivo_4.2"
+author: "Vicente"
+date: "`r Sys.Date()`"
+output: html_document
+runtime: shiny
+---
+
+```{r librerias}
+
+library(dplyr)
+library(readr)
+library(stringr)
+library(tidyverse)
+library(shiny)
+library(lubridate)
+library(ggtext)
+library(jsonlite)
+library(purrr)
+library(ggplot2)
+
+```
+
+
+```{r coeff variacion dias malos}
+
+# Leer y transformar los datos
+generacion <- read_csv("generacion_todas_comunidades.csv") %>%
+  filter(variable == "Solar fotovoltaica") %>%
+  mutate(
+    fecha = ymd(fecha),
+    mes = month(fecha),
+    anio = year(fecha),
+    comunidad = tolower(str_replace_all(comunidad, " ", "_"))
+  )
+
+# Agrupar por comunidad, año y mes
+generacion_mensual <- generacion %>%
+  group_by(comunidad, anio, mes) %>%
+  summarise(valor = mean(valor, na.rm = TRUE), .groups = "drop")
+
+# Comunidades de interés
+comunidades_interes <- c("andalucia", "asturias", "comunidadvalenciana")
+
+# Calcular el CV anual completo por comunidad y año
+cv_anual <- generacion_mensual %>%
+  filter(comunidad %in% comunidades_interes) %>%
+  group_by(comunidad, anio) %>%
+  summarise(
+    media_mensual = mean(valor, na.rm = TRUE),
+    sd_mensual = sd(valor, na.rm = TRUE),
+    coef_variacion = sd_mensual / media_mensual,
+    .groups = "drop"
+  ) %>%
+  arrange(anio)
+
+# Mostrar resultado
+print(cv_anual)
+
+```
+
+
+
+```{r app buena}
+# ——————————————————————————————
+# 1) CARGA Y UNIFICACIÓN DE DATOS
+# ——————————————————————————————
+
+files <- list.files("C:/Users/vicen/OneDrive - UPV/UNIVERSIDAD/SEGUNDO ANYO/2_CUATRIMESTRE/PROYECTO/bases/data/datos_combinados", pattern = "\\.csv$", full.names = TRUE)
+
+# Función para leer cada CSV y etiquetarlo con comunidad y año
+read_com <- function(path) {
+  # extrae "andalucia" y "2023" de "…/andalucia_2023.csv"
+  nm <- basename(path) %>% str_remove("\\.csv$")
+  parts <- str_split(nm, "_", simplify = TRUE)
+  com <- parts[1]
+  an  <- parts[2]
+  
+  read_csv(path,
+           col_types = cols(
+             fecha   = col_character(),
+             inso    = col_double(),
+             tm_min  = col_double(),
+             ta_max  = col_double(),
+             p_sol   = col_double(),
+             ta_min  = col_double(),
+             ti_max  = col_double(),
+             tm_mes  = col_double(),
+             tm_max  = col_double()
+           )) %>%
+    mutate(
+      comunidad = com,
+      anio      = an,
+      # separamos "2023-1" → año2 / mes
+      año2_mes  = fecha,
+      año2      = word(fecha, 1, sep = "-"),
+      mes       = as.integer(word(fecha, 2, sep = "-")),
+      # factor de mes con abreviatura
+      mes_f     = factor(month.abb[mes], levels = month.abb)
+    )
+}
+
+# leemos y bind
+df <- map_dfr(files, read_com)
+
+# ——————————————————————————————
+# 2) UI
+# ——————————————————————————————
+ui <- fluidPage(
+  titlePanel("Dashboard Energía Solar por Comunidad | 2023–2024"),
+  sidebarLayout(
+    sidebarPanel(
+      selectInput("comunidad", "Elige comunidad:",
+                  choices = sort(unique(df$comunidad))),
+      selectInput("anio",       "Elige año:",
+                  choices = sort(unique(df$anio)))
+    ),
+    mainPanel(
+      plotOutput("plot_meteo", height = "400px"),
+      br(), br(),
+      plotOutput("plot_prod",  height = "400px")
+    )
+  )
+)
+
+# ——————————————————————————————
+# 3) SERVER
+# ——————————————————————————————
+server <- function(input, output, session) {
+  
+  # reacciona a la selección y filtra
+  filtro <- reactive({
+    df %>%
+      filter(comunidad == input$comunidad,
+             anio       == input$anio)
+  })
+  
+  # — Gráfico 1: insolación y temperatura media
+  output$plot_meteo <- renderPlot({
+    dat <- filtro()
+    ggplot(dat, aes(x = mes_f)) +
+      geom_line(aes(y = inso,    color = "Insolación")) +
+      geom_point(aes(y = inso,    color = "Insolación"), size = 2) +
+      geom_line(aes(y = tm_mes,  color = "Temperatura media")) +
+      geom_point(aes(y = tm_mes,  color = "Temperatura media"), size = 2) +
+      scale_color_manual(
+        name = "Variable",
+        values = c("Insolación" = "#EC7063",   # rojo tomatito
+                   "Temperatura media" = "#1ABC9C") # turquesa
+      ) +
+      labs(
+        x = "Mes",
+        y = "Valor",
+        title = glue::glue("Variación mensual de insolación y temperatura media<br />
+                           {str_to_title(input$comunidad)} – {input$anio}")
+      ) +
+      theme_minimal(base_size = 14) +
+      theme(
+        plot.title = element_markdown(),
+        legend.position = "bottom"
+      )
+  })
+  
+  # — Gráfico 2: producción mensual
+  output$plot_prod <- renderPlot({
+    dat <- filtro()
+    ggplot(dat, aes(x = mes_f, y = p_sol)) +
+      geom_col(fill = "#F5B041") +
+      labs(
+        x = "Mes",
+        y = "Producción (MWh)",
+        title = glue::glue("Producción mensual de energía solar fotovoltaica<br />
+                           {str_to_title(input$comunidad)} – {input$anio}")
+      ) +
+      theme_minimal(base_size = 14) +
+      theme(
+        plot.title = element_markdown()
+      )
+  })
+  
+}
+
+# ——————————————————————————————
+# 4) RUN APP
+# ——————————————————————————————
+shinyApp(ui, server)
+
+```
+
+
+```{r dias malos}
+
+# Variables a conservar
+vars <- c("fecha", "inso", "tm_min", "ta_max", "p_sol", 
+          "ta_min", "ti_max", "tm_mes", "tm_max", "n_cub", "n_des", "n_nub")
+
+# Función para procesar los datos y mantener "2023-13" ordenado al final
+procesar_datos <- function(df) {
+  df %>%
+    select(any_of(vars)) %>%
+    mutate(mes_num = as.numeric(sub("2023-", "", fecha))) %>%
+    arrange(mes_num) %>%
+    select(-mes_num) %>%
+    mutate(across(-fecha, ~as.numeric(gsub("\\(.*\\)", "", .))))
+}
+
+# Leer y procesar
+datos_alicante <- fromJSON("datos_almeria_andalucia_2023.txt", flatten = TRUE)
+datos_castellon <- fromJSON("datos_jaen_andalucia_2023.txt", flatten = TRUE)
+
+alicante <- procesar_datos(datos_alicante)
+castellon <- procesar_datos(datos_castellon)
+
+# Unir y calcular medias por fecha
+combinado <- bind_rows(alicante,castellon)
+
+comunidad_valenciana <- combinado %>%
+  group_by(fecha) %>%
+  summarise(across(where(is.numeric), mean, na.rm = TRUE), .groups = "drop") %>%
+  filter(!(fecha %in% c("2023-13", "2024-13"))) %>%
+  mutate(
+    diasnublados = n_cub + n_nub,
+    mes_num = as.numeric(sub("2023-", "", fecha))
+  ) %>%
+  arrange(mes_num) %>%
+  select(-mes_num)
+
+# Mostrar resultado
+print(comunidad_valenciana)
+
+#write.csv(comunidad_valenciana, "andaluciamalo_2023.csv", row.names = FALSE)
+```
+
+
+```{r adquisicion datos buena}
+
+# Variables que te interesan
+vars_interes <- c("fecha", "inso", "tm_min", "ta_max", "p_sol", 
+                  "ta_min", "ti_max", "tm_mes", "tm_max")
+
+# Función para leer y limpiar un archivo
+leer_y_limpio <- function(path) {
+  df <- fromJSON(path) |> as.data.frame()
+  df <- df |> 
+    select(any_of(vars_interes)) |> 
+    mutate(across(-fecha, ~as.numeric(gsub("\\(.*\\)", "", as.character(.)))))
+  return(df)
+}
+
+# Leer los tres archivos
+almeria <- leer_y_limpio("datos_almeria_andalucia_2023.txt")
+granada <- leer_y_limpio("datos_granada_andalucia_2023.txt")
+jaen    <- leer_y_limpio("datos_jaen_andalucia_2023.txt")
+
+# Unir por posición
+resultado <- almeria
+resultado[,-1] <- (almeria[,-1] + granada[,-1]+ jaen[,-1] ) / 3
+
+# Redondear y ordenar por fecha
+resultado <- resultado %>%
+  mutate(across(where(is.numeric), ~ round(., 1))) %>%
+  mutate(mes = as.numeric(sub("2023-", "", fecha))) %>%
+  arrange(mes) %>%
+  select(-mes)
+
+# Mostrar tabla final
+print(resultado)
+```
+
+
+
+```{r numero dias malos por comunidad}
+
+# Leer los 4 archivos CSV
+df_1 <- read_csv("comunidadvalencianamalo_2023.csv") %>% mutate(comunidad = "comunidadvalenciana", anio = "2023")
+df_2 <- read_csv("comunidadvalencianamalo_2024.csv") %>% mutate(comunidad = "comunidadvalenciana", anio = "2024")
+df_3 <- read_csv("asturiasmalo_2023.csv") %>% mutate(comunidad = "asturias", anio = "2023")
+df_4 <- read_csv("asturiasmalo_2024.csv") %>% mutate(comunidad = "asturias", anio = "2024")
+df_5 <- read_csv("andaluciamalo_2023.csv") %>% mutate(comunidad = "andalucia", anio = "2023")
+df_6 <- read_csv("andaluciamalo_2024.csv") %>% mutate(comunidad = "andalucia", anio = "2024")
+
+# Unir los datos
+df_total <- bind_rows(df_1,df_2)
+
+# Extraer número de mes
+df_total <- df_total %>%
+  mutate(mes = as.integer(str_extract(fecha, "(?<=-)[0-9]+"))) %>%
+  filter(!is.na(mes) & mes <= 12)
+
+# Calcular media mensual de n_malos
+df_malos <- df_total %>%
+  group_by(comunidad, anio, mes) %>%
+  summarise(diasnublados = mean(diasnublados, na.rm = TRUE), .groups = "drop")
+
+# Etiquetas de meses abreviadas
+meses <- c("Jan", "Feb", "Mar", "Apr", "May", "Jun",
+           "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+df_malos$mes_nombre <- factor(meses[df_malos$mes], levels = meses)
+
+# Crear gráfico comparativo
+ggplot(df_malos, aes(x = mes_nombre, y = diasnublados, color = anio, group = anio)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  facet_wrap(~ comunidad, nrow = 1) +
+  labs(
+    title = "Días meteorológicamente malos por comunidad",
+    x = "Mes",
+    y = "Días malos (n_malos)",
+    color = "Año"
+  ) +
+  theme_minimal()
+
+
+
+
+```
+
+```{r}
+library(dplyr)
+library(readr)
+library(ggplot2)
+library(stringr)
+
+# --- 1. Leer todos los archivos y añadir metadatos ---
+df_1 <- read_csv("comunidadvalencianamalo_2023.csv") %>% mutate(comunidad = "Comunidad Valenciana", anio = "2023")
+df_2 <- read_csv("comunidadvalencianamalo_2024.csv") %>% mutate(comunidad = "Comunidad Valenciana", anio = "2024")
+df_3 <- read_csv("asturiasmalo_2023.csv") %>% mutate(comunidad = "Asturias", anio = "2023")
+df_4 <- read_csv("asturiasmalo_2024.csv") %>% mutate(comunidad = "Asturias", anio = "2024")
+df_5 <- read_csv("andaluciamalo_2023.csv") %>% mutate(comunidad = "Andalucía", anio = "2023")
+df_6 <- read_csv("andaluciamalo_2024.csv") %>% mutate(comunidad = "Andalucía", anio = "2024")
+
+# --- 2. Unir todos los datos ---
+df_total <- bind_rows(df_1, df_2)
+
+# --- 3. Extraer el mes ---
+df_total <- df_total %>%
+  mutate(mes = as.integer(str_extract(fecha, "(?<=-)[0-9]+"))) %>%
+  filter(!is.na(mes) & mes <= 12)
+
+# --- 4. Calcular media mensual de n_cub ---
+df_ncub <- df_total %>%
+  group_by(comunidad, anio, mes) %>%
+  summarise(n_cub = mean(n_cub, na.rm = TRUE), .groups = "drop")
+
+# --- 5. Añadir nombres de meses ---
+meses <- c("Jan", "Feb", "Mar", "Apr", "May", "Jun",
+           "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+df_ncub$mes_nombre <- factor(meses[df_ncub$mes], levels = meses)
+
+# --- 6. Crear gráfico facetado por comunidad ---
+ggplot(df_ncub, aes(x = mes_nombre, y = n_cub, color = anio, group = anio)) +
+  geom_line(size = 1) +
+  geom_point(size = 2) +
+  facet_wrap(~ comunidad, nrow = 1) +
+  labs(
+    title = "Media mensual de días cubiertos (n_cub) por comunidad",
+    x = "Mes",
+    y = "Días cubiertos (n_cub)",
+    color = "Año"
+  ) +
+  theme_minimal()
+
+
+```
+```{r}
+library(dplyr)
+library(readr)
+library(lubridate)
+library(stringr)
+library(glue)  # Para formateo bonito
+
+# 1. Leer producción de energía
+produccion <- read_csv("generacion_todas_comunidades.csv") %>%
+  filter(variable == "Solar fotovoltaica",
+         comunidad == "Comunidadvalenciana") %>%
+  mutate(
+    fecha = ymd(fecha),
+    mes = month(fecha),
+    anio = year(fecha)
+  ) %>%
+  filter(anio == 2023) %>%
+  select(mes, valor)
+
+# 2. Leer días cubiertos
+n_cub <- read_csv("comunidadvalencianamalo_2023.csv") %>%
+  mutate(mes = as.integer(str_extract(fecha, "(?<=-)[0-9]+"))) %>%
+  group_by(mes) %>%
+  summarise(n_cub = mean(diasnublados, na.rm = TRUE), .groups = "drop")
+
+# 3. Unir datos
+df <- inner_join(produccion, n_cub, by = "mes")
+
+# 4. Calcular correlación
+correlacion <- cor(df$valor, df$n_cub, use = "complete.obs", method="pearson")
+
+# 5. Imprimir resultado bonito
+cat(glue("📊 Correlación entre producción solar y días cubiertos (Pearson 2023): {round(correlacion, 3)}\n"))
+
+```
+

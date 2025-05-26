@@ -1,0 +1,187 @@
+---
+title: "Objetivo_4.1"
+author: "Vicente"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r librerias}
+
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+library(readr)
+library(tidyverse)      
+library(lubridate)  
+library(shiny)
+library(stringr)
+library(viridis)
+
+```
+
+
+```{r lecturas de archivos}
+
+andalucia_2023 = read.csv("andalucia_2023.csv")
+andalucia_2024 = read.csv("andalucia_2024.csv")
+aragon_2023 = read.csv("aragon_2023.csv")
+aragon_2024 = read.csv("andalucia_2024.csv")
+asturias_2023 = read.csv("asturias_2023.csv")
+asturias_2024 = read.csv("asturias_2024.csv")
+baleares_2023 = read.csv("baleares_2023.csv")
+baleares_2024 = read.csv("baleares_2024.csv")
+canarias_2023 = read.csv("canarias_2023.csv")
+canarias_2024 = read.csv("canarias_2024.csv")
+cantabria_2023 = read.csv("cantabria_2023.csv")
+cantabria_2024 = read.csv("cantabria_2024.csv")
+castillaleon_2023 = read.csv("castillaleon_2023.csv")
+castillaleon_2024 = read.csv("castillaleon_2024.csv")
+castillamancha_2023 = read.csv("castillamancha_2023.csv")
+castillamancha_2024 = read.csv("castillamancha_2024.csv")
+cataluña_2023 = read.csv("cataluña_2023.csv")
+cataluña_2024 = read.csv("cataluña_2024.csv")
+comvalenciana_2023 = read.csv("comunidadvalenciana_2023.csv")
+comvalenciana_2024 = read.csv("comunidadvalenciana_2024.csv")
+extremadura_2023 = read.csv("extremadura_2023.csv")
+extremadura_2024 = read.csv("extremadura_2024.csv")
+galicia_2023 = read.csv("galicia_2023.csv")
+galicia_2024 = read.csv("galicia_2024.csv")
+madrid_2023 = read.csv("madrid_2023.csv")
+madrid_2024 = read.csv("madrid_2024.csv")
+murcia_2023 = read.csv("murcia_2023.csv")
+murcia_2024 = read.csv("murcia_2024.csv")
+navarra_2023 = read.csv("navarra_2023.csv")
+vavarra_2024 = read.csv("navarra_2024.csv")
+paisvasco_2023 = read.csv("paisvasco_2023.csv")
+paisvasco_2024 = read.csv("paisvasco_2024.csv")
+rioja_2023 = read.csv("rioja_2023.csv")
+rioja_2024 = read.csv("rioja_2024.csv")
+generacion <- read_csv("generacion_todas_comunidades.csv")
+
+```
+
+```{r comparativa}
+# --- 1) PRODUCCIÓN SOLAR FOTOVOLTAICA ---
+gen <- read_csv("generacion_todas_comunidades.csv",
+                col_types = cols(
+                  fecha     = col_date(format = "%Y-%m-%d"),
+                  variable  = col_character(),
+                  comunidad = col_character(),
+                  valor     = col_double()
+                )) %>%
+  mutate(
+    year  = year(fecha),
+    clave = str_replace_all(str_to_lower(comunidad), "[ _]", "")
+  )
+
+media_prod <- gen %>%
+  filter(variable == "Solar fotovoltaica") %>%
+  group_by(clave, year) %>%
+  summarise(produccion_anual = sum(valor, na.rm = TRUE), .groups = "drop") %>%
+  group_by(clave) %>%
+  summarise(media_anual_produccion = mean(produccion_anual, na.rm = TRUE),
+            .groups = "drop")
+
+
+# --- 2) INSOLACIÓN AEMET ---
+aemet_files <- list.files(pattern = "^[[:alpha:]_]+_[0-9]{4}\\.csv$")
+aemet_files <- setdiff(aemet_files, "generacion_todas_comunidades.csv")
+
+aemet_list <- lapply(aemet_files, function(f) {
+  df <- read_csv(f, col_types = cols(
+    fecha = col_character(),
+    inso  = col_double(),
+    .default = col_guess()
+  ))
+  df %>%
+    mutate(
+      year            = as.integer(str_extract(f, "[0-9]{4}")),
+      comunidad_file  = str_remove(f, "_[0-9]{4}\\.csv$"),
+      clave           = str_replace_all(str_to_lower(comunidad_file), "[ _]", "")
+    )
+})
+
+# Normalizar columnas
+columnas_objetivo <- c("fecha", "inso", "year", "comunidad_file", "clave")
+aemet_list <- lapply(aemet_list, function(df) {
+  faltantes <- setdiff(columnas_objetivo, colnames(df))
+  for (col in faltantes) df[[col]] <- NA
+  df <- df[, columnas_objetivo]
+  return(df)
+})
+
+aemet <- do.call(rbind, aemet_list)
+
+media_insol <- aemet %>%
+  group_by(clave, year) %>%
+  summarise(media_inso_anual = mean(inso, na.rm = TRUE), .groups = "drop") %>%
+  group_by(clave) %>%
+  summarise(media_anual_inso = mean(media_inso_anual, na.rm = TRUE),
+            .groups = "drop")
+
+
+# --- 3) COMPARATIVA FINAL ---
+comp <- media_prod %>%
+  left_join(media_insol, by = "clave") %>%
+  mutate(produccion_por_hora_de_sol = media_anual_produccion / media_anual_inso) %>%
+  left_join(distinct(gen, clave, comunidad), by = "clave") %>%
+  select(comunidad, media_anual_produccion, media_anual_inso, produccion_por_hora_de_sol) %>%
+  arrange(desc(produccion_por_hora_de_sol))
+
+# Sustitución manual de valores NA leidos mal por R
+
+comp_fixed <- comp %>%
+  mutate(media_anual_inso = case_when(
+    is.na(media_anual_inso) & comunidad == "Castillalamancha"    ~ 8.00,
+    is.na(media_anual_inso) & comunidad == "Castillayleon"       ~ 7.9,
+    is.na(media_anual_inso) & comunidad == "Cataluna"            ~ 8.90,
+    is.na(media_anual_inso) & comunidad == "Islas Baleares"      ~ 8.20,
+    is.na(media_anual_inso) & comunidad == "Larioja"             ~ 6.00,
+    TRUE ~ media_anual_inso
+  )) %>%
+  mutate(produccion_por_hora_de_sol = media_anual_produccion / media_anual_inso)
+
+# Mostrar resultados finales
+print(comp_fixed)
+
+
+```
+
+
+
+
+```{r}
+
+# suponiendo que comp ya existe
+comp_plot <- comp_fixed %>%
+  mutate(prod_millones = produccion_por_hora_de_sol / 1e6)
+
+ggplot(comp_plot, aes(
+    x    = reorder(comunidad, -prod_millones),  # <- ojo al signo menos
+    y    = prod_millones,
+    fill = prod_millones
+  )) +
+  geom_col(width = 0.7) +
+  geom_text(aes(label = sprintf("%.2f", prod_millones)),
+            hjust = -0.1, size = 3.5) +
+  coord_flip(expand = FALSE) +
+  scale_fill_viridis_c(option = "plasma", direction = -1, guide = FALSE) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.15))) +
+  labs(
+    title    = "Producción fotovoltaica por hora de insolación",
+    subtitle = "Media anual de producción ÷ media anual de horas de sol",
+    x        = NULL,
+    y        = "Millones de unidades por hora de sol"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    plot.title         = element_text(face = "bold", size = 16),
+    plot.subtitle      = element_text(size = 12, margin = margin(b = 15)),
+    axis.text.y        = element_text(face = "bold"),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.x = element_blank()
+  )
+
+
+```
+
