@@ -128,7 +128,7 @@ Como se decia anteriormente, este repositorio es público y está pensado para q
 
 Se aceptan sugerencias, aportaciones o correcciones mediante Pull Requests o Issues. El código está documentado para facilitar su comprensión y reutilización.
 
-- Clonación del repositorio_
+- Clonación del repositorio:
 
 Puedes clonar este repositorio en tu máquina local para explorar su estructura o trabajar sobre él.
 
