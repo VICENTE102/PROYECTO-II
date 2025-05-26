@@ -36,8 +36,8 @@ Este repositorio contiene el desarrollo completo del proyecto realizado en la as
 ├── docs/                      # Informes, memoria final y anexos HTML
 │   ├── memoria_final.docx
 │   ├── index_anexos.md
-│   ├── memoria_anexo_1.html
-│   ├── memoria_anexo_2.html
+│   ├── hito_2.html
+│   ├── objetivo_4_vicente.html
 │   └── ...
 │
 └── README.md                  # Este archivo
