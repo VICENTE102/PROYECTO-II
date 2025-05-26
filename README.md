@@ -137,5 +137,50 @@ Puedes clonar este repositorio en tu máquina local para explorar su estructura 
 ```bash
 git clone git@github.com:VICENTE102/PROYECTO-II.git
 cd PROYECTO-II
+```
+---
 
+### 🧪 Abrir y trabajar con los `.Rmd`
 
+Una vez clonado el repositorio, puedes abrir cualquier archivo `.Rmd` desde **RStudio** o la terminal.
+
+#### Opción 1: Desde RStudio
+
+1. Abre **RStudio**.
+2. Ve a **File > Open Project...** o simplemente abre la carpeta donde hayas clonado el proyecto.
+3. Navega a la carpeta del objetivo que quieras consultar.
+4. Abre el archivo `.Rmd` y pulsa **Knit** para compilarlo a HTML, Word o PDF.
+
+#### Opción 2: Desde la terminal
+
+1. Abre una terminal en la carpeta del proyecto:
+
+```bash
+cd PROYECTO-II
+```
+2. Inicia una sesión de R:
+```bash
+R
+```
+3. Dentro de R, compila el .Rmd que quieras: 
+```bash
+#ejemplo:
+rmarkdown::render("objetivos/objetivo_1_pablo/analisis_objetivo_1.Rmd")
+```
+
+Esto generará automáticamente el documento de salida (por ejemplo, analisis_objetivo_1.html) en la misma carpeta.
+Asegúrate de tener instalados los paquetes rmarkdown y knitr. Puedes hacerlo con:
+
+```bash
+install.packages("rmarkdown")
+install.packages("knitr")
+```
+---
+
+### 🛠️ Sugerencias para colaborar
+
+- Trabaja siempre en ramas diferentes si haces cambios importantes.
+- Ejecuta git pull antes de modificar nada.
+- Usa nombres claros para los commits.
+- Si encuentras errores o posibles mejoras, abre un Issue.
+##### Las contribuciones son bienvenidas a través de Pull Requests!!!
