@@ -1,0 +1,572 @@
+---
+title: "Análisis exploratorio de datos energéticos"
+author: "Pablo Alpuente, Vicente Ricos, Miguel García, Victor Lorenzo, Marc Fernandez"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    df_print: paged
+  pdf_document:
+    toc: true
+    number_sections: true
+    fig_caption: true
+    df_print: kable
+    latex_engine: xelatex
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  warning = FALSE,   # no mostrar advertencias
+  message = FALSE,   # no mostrar mensajes de carga
+  fig.align = "center",
+  fig.width = 7,
+  fig.height = 4
+)
+options(readr.show_col_types = FALSE)
+```
+
+Algunas librerias utiles para el eda:
+
+```{r}
+library(jsonlite)
+library(stringr)
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+library(knitr)
+library(naniar)
+```
+
+### Funciones practicas para la limpieza y el eda
+
+```{r}
+leer_dataset_generacion <- function(file_path) {
+  library(readr)
+  df_raw <- read_csv(file_path, col_names = FALSE, locale = locale(encoding = "ISO-8859-1"))
+  df_limpio <- df_raw[5:(nrow(df_raw) - 11), ]
+  df_final <- as.data.frame(df_limpio, stringsAsFactors = FALSE)
+  df_final[1, 1] <- "Mes"
+  return(df_final)
+}
+
+```
+
+```{r}
+formatear_a_largo <- function(df, comunidad) {
+  library(dplyr)
+  library(tidyr)
+  library(lubridate)
+
+  nombres_col <- as.character(df[1, ])
+  colnames(df) <- nombres_col
+  df <- df[-1, ]
+  colnames(df)[1] <- "variable"
+  df$comunidad <- comunidad
+
+  df_largo <- df %>%
+    pivot_longer(
+      cols = -c(variable, comunidad),
+      names_to = "mes",
+      values_to = "valor"
+    ) %>%
+    mutate(
+      valor = as.numeric(gsub(",", ".", valor)),
+      fecha = as.Date(
+        paste0("01/",
+               c("ene"="01", "feb"="02", "mar"="03", "abr"="04", "may"="05", "jun"="06",
+                 "jul"="07", "ago"="08", "sep"="09", "oct"="10", "nov"="11", "dic"="12")[substr(mes, 1, 3)],
+               "/20", substr(mes, 5, 6)),
+        format = "%d/%m/%Y"
+      )
+    ) %>%
+    select(variable, comunidad, valor, fecha) %>%
+    arrange(fecha)
+
+  return(df_largo)
+}
+```
+
+### EDA PARA GENERACIÓN
+
+Ahora hacemos una funcion para cargar todos los data sets que tenemos para cada comunidad, en total tenemos 17 comunidades, de manera que podamos automatizar el proceso.
+
+```{r eval=FALSE, include=FALSE}
+comunidades <- c("andalucia", "aragon", "asturias", "cantabria", "castillalamancha", "castillayleon", "cataluna","comunidadValenciana","extremadura", "galicia", "islas_baleares", "islas_canarias", "larioja", "madrid","murcia", "navarra", "pais_vasco")  
+
+input_dir <- "/Users/pabloalpuente/Downloads/"
+output_dir <- "/Users/pabloalpuente/Downloads/data/generation/"
+
+for (comunidad in comunidades) {
+  file_path <- paste0(input_dir, comunidad, ".csv")
+  df_raw <- leer_dataset_generacion(file_path)
+  df_largo <- formatear_a_largo(df_raw, comunidad = str_to_title(gsub("_", " ", comunidad)))
+  
+  output_path <- paste0(output_dir, "generacion_", comunidad, "_limpio.csv")
+  write_csv(df_largo, output_path)
+  message("Guardado: ", output_path)
+}
+
+```
+
+Ahora que tenemos los 17 datasets en formato long vamos a visualizar rapidamente para poder entenderlos rapidamente y despues unirlos un un mismo data set para proceder a analizar nulos, y limpiar lo que haga valta.
+
+A continuación se muestran las primeras filas del dataset de Galicia tras la limpieza:
+
+```{r echo=TRUE}
+df <- readr::read_csv("data/generation/generacion_galicia_limpio.csv")
+head(df)
+```
+
+Vamos a unirlo en un mismo data set, que nos servirá para analizar y posteriormente cruzar datos:
+
+```{r}
+ruta <- "data/generation"
+archivos <- list.files(path = ruta, pattern = "_limpio\\.csv$", full.names = TRUE)
+
+#unirlos en uno solo
+df_unido <- archivos %>%
+  lapply(read_csv) %>%
+  bind_rows()
+
+glimpse(df_unido)
+write_csv(df_unido, file = "data/generacion_todas_comunidades.csv")
+
+```
+
+```{r}
+head(df_unido)
+```
+
+```{r}
+df <- read_csv("data/generacion_todas_comunidades.csv")
+
+tipos_energia <- df %>%
+  distinct(variable) %>%
+  arrange(variable)
+
+kable(tipos_energia, col.names = "Tipos de energía")
+
+comunidades <- df %>%
+  distinct(comunidad) %>%
+  arrange(comunidad)
+
+kable(comunidades, col.names = "Comunidades autónomas")
+
+nulos <- df %>%
+  summarise_all(~ sum(is.na(.))) %>%
+  pivot_longer(cols = everything(), names_to = "columna", values_to = "n_nulos")
+
+kable(nulos, col.names = c("Columna", "Nº de nulos"))
+
+nulos_por_variable <- df %>%
+  group_by(variable) %>%
+  summarise(
+    n_nulos = sum(is.na(valor)),
+    total = n(),
+    porcentaje_nulos = round(100 * n_nulos / total, 2)
+  ) %>%
+  arrange(desc(porcentaje_nulos))
+
+kable(nulos_por_variable, col.names = c("Tipo de energía", "Nº de nulos", "Total observaciones", "% Nulos"))
+```
+
+```{r}
+tecnologias_criticas <- c("Fuel + Gas", "Carbón", "Eólica")
+
+nulos_por_comunidad <- df %>%
+  filter(variable %in% tecnologias_criticas) %>%
+  group_by(variable, comunidad) %>%
+  summarise(
+    total = n(),
+    n_nulos = sum(is.na(valor)),
+    porcentaje_nulos = round((n_nulos / total) * 100, 1),
+    .groups = "drop"
+  )
+
+nulos_por_comunidad %>%
+  arrange(desc(porcentaje_nulos)) %>%
+  print(n = Inf)
+
+ggplot(nulos_por_comunidad, aes(x = comunidad, y = variable, fill = porcentaje_nulos)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = paste0(porcentaje_nulos, "%")), size = 3) +
+  scale_fill_gradient(low = "white", high = "red") +
+  labs(title = "Porcentaje de valores nulos por tecnología y comunidad",
+       x = "Comunidad Autónoma",
+       y = "Tecnología energética") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+```{r}
+#quitamos fuel y gas y carbon
+df <- df[!(df$variable %in% c("Fuel + Gas", "Carbón")), ]
+```
+
+```{r}
+#analizamos las energias que menos participan
+tecnologias_raras <- c("Hidroeólica", "Motores diésel", "Turbina de gas", "Turbina de vapor", "Nuclear")
+
+df %>%
+  filter(variable %in% tecnologias_raras) %>%
+  group_by(variable, comunidad) %>%
+  summarise(registros = n(), .groups = "drop") %>%
+  ggplot(aes(x = comunidad, y = registros, fill = variable)) +
+  geom_col(position = "dodge") +
+  labs(title = "Distribución de tecnologías poco frecuentes por comunidad",
+       x = "Comunidad Autónoma", y = "Número de registros") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+```
+
+```{r}
+tecnologias_a_eliminar <- c("Hidroeólica", "Motores diésel", "Turbina de gas", "Turbina de vapor")
+
+df <- df %>% 
+  filter(!variable %in% tecnologias_a_eliminar)
+unique(df$variable)
+```
+
+```{r}
+df %>%
+  count(comunidad, name = "n_registros") %>%
+  arrange(desc(n_registros)) -> resumen_comunidades
+
+print(resumen_comunidades)
+
+ggplot(resumen_comunidades, aes(x = reorder(comunidad, -n_registros), y = n_registros)) +
+  geom_col(fill = "steelblue") +
+  theme_minimal() +
+  labs(title = "Número de registros por comunidad autónoma",
+       x = "Comunidad",
+       y = "Número de registros") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+Ahora repetiremos el proceso pero para los datos relacionados con balance energético, los data sets son muy parecidos:
+
+```{r}
+df<- read_csv('data/balance/balance_cataluna_limpio.csv', col_names = FALSE, locale = locale(encoding = "ISO-8859-1"))
+head(df, 30)
+```
+
+Definimos las funciones (idénticas a las que usamos en generación pero reutilizadas para balance):
+
+```{r}
+leer_dataset_balance <- function(file_path) {
+  df_raw <- read_csv(file_path, col_names = FALSE, locale = locale(encoding = "ISO-8859-1"))
+  df_limpio <- df_raw[5:(nrow(df_raw) - 11), ]
+  df_final <- as.data.frame(df_limpio, stringsAsFactors = FALSE)
+  df_final[1, 1] <- "Mes"
+  return(df_final)
+}
+
+formatear_balance_largo <- function(df, comunidad) {
+  nombres_col <- as.character(df[1, ])
+  colnames(df) <- nombres_col
+  df <- df[-1, ]
+  colnames(df)[1] <- "variable"
+  df$comunidad <- comunidad
+
+  df_largo <- df %>%
+    pivot_longer(cols = -c(variable, comunidad), names_to = "mes", values_to = "valor") %>%
+    mutate(
+      valor = as.numeric(gsub(",", ".", valor)),
+      fecha = as.Date(paste0(
+        "01/",
+        c("ene" = "01", "feb" = "02", "mar" = "03", "abr" = "04", "may" = "05", "jun" = "06",
+          "jul" = "07", "ago" = "08", "sep" = "09", "oct" = "10", "nov" = "11", "dic" = "12")[substr(mes, 1, 3)],
+        "/20", substr(mes, 5, 6)
+      ), format = "%d/%m/%Y")
+    ) %>%
+    select(variable, comunidad, fecha, valor)
+
+  return(df_largo)
+}
+```
+
+Ahora aplicamos estas funciones a todos los ficheros de balance:
+
+```{r}
+input_dir <- "/Users/pabloalpuente/Downloads"
+output_dir <- "/Users/pabloalpuente/Downloads/data/balance"
+
+ficheros_balance <- list.files(input_dir, pattern = "^balance_.*\\.csv$", full.names = TRUE)
+
+for (file in ficheros_balance) {
+  comunidad <- gsub("^balance_(.*)\\.csv$", "\\1", basename(file))
+  df <- leer_dataset_balance(file)
+  df_largo <- formatear_balance_largo(df, comunidad)
+  write_csv(df_largo, file.path(output_dir, paste0("balance_", comunidad, "_limpio.csv")))
+}
+
+```
+
+Y finalmente los unimos en un mismo csv:
+
+```{r}
+archivos_limpios <- list.files(output_dir, pattern = "_limpio\\.csv$", full.names = TRUE)
+
+df_balance_total <- archivos_limpios %>%
+  lapply(read_csv, show_col_types = FALSE) %>%
+  bind_rows()
+
+write_csv(df_balance_total, "/Users/pabloalpuente/Downloads/balance_todas_comunidades.csv")
+
+```
+
+### EDA PARA BALANCE
+
+```{r}
+df_balance <- readr::read_csv("data/balance_todas_comunidades.csv")
+df_balance %>%
+  group_by(variable) %>%
+  summarise(n_nulos = sum(is.na(valor))) %>%
+  arrange(desc(n_nulos)) %>%
+  kable()
+
+df_balance %>%
+  group_by(comunidad) %>%
+  summarise(n_nulos = sum(is.na(valor))) %>%
+  arrange(desc(n_nulos)) %>%
+  kable()
+
+df_balance %>%
+  count(variable, sort = TRUE) %>%
+  kable()
+
+df_balance %>%
+  count(comunidad, sort = TRUE) %>%
+  kable()
+
+df_balance %>%
+  mutate(nulo = is.na(valor)) %>%
+  group_by(comunidad, variable) %>%
+  summarise(porcentaje_nulos = mean(nulo)) %>%
+  ggplot(aes(x = variable, y = comunidad, fill = porcentaje_nulos)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient(low = "white", high = "red") +
+  theme_minimal() +
+  labs(title = "Mapa de calor de nulos en el dataset de balance",
+       fill = "% nulos") +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+```{r}
+
+nulos_variable <- df_balance %>%
+  group_by(variable) %>%
+  summarise(n_nulos = sum(is.na(valor))) %>%
+  filter(n_nulos > 0)
+
+# visualizar nulos - variable
+ggplot(nulos_variable, aes(x = reorder(variable, n_nulos), y = n_nulos)) +
+  geom_col(fill = "tomato") +
+  coord_flip() +
+  labs(title = "Valores nulos por variable",
+       x = "Variable energética",
+       y = "Número de nulos") +
+  theme_minimal()
+
+# nulos por comunidad
+nulos_comunidad <- df_balance %>%
+  group_by(comunidad) %>%
+  summarise(n_nulos = sum(is.na(valor))) %>%
+  filter(n_nulos > 0)
+
+# visualizar nulos - comunidad
+ggplot(nulos_comunidad, aes(x = reorder(comunidad, n_nulos), y = n_nulos)) +
+  geom_col(fill = "steelblue") +
+  coord_flip() +
+  labs(title = "Valores nulos por comunidad autónoma",
+       x = "Comunidad",
+       y = "Número de nulos") +
+  theme_minimal()
+
+```
+
+```{r}
+variables_con_nulos <- c("Carbón", "Entrega batería", "Fuel + Gas", "Carga batería")
+
+heatmap_nulos_filtrado <- df_balance %>%
+  filter(variable %in% variables_con_nulos) %>%
+  group_by(variable, comunidad) %>%
+  summarise(porc_nulos = mean(is.na(valor)) * 100, .groups = "drop")
+
+ggplot(heatmap_nulos_filtrado, aes(x = comunidad, y = variable, fill = porc_nulos)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = sprintf("%.1f%%", porc_nulos)), color = "black", size = 3) +
+  scale_fill_gradient(low = "white", high = "red", name = "% de nulos") +
+  labs(title = "Porcentaje de nulos por comunidad en variables clave",
+       x = "Comunidad Autónoma",
+       y = "Variable energética") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+```
+
+```{r}
+variables_raras <- c("Nuclear", "Carga batería", "Entrega batería", 
+                     "Motores diésel", "Hidroeólica", "Turbina de gas")
+
+df_burbujas <- df_balance %>%
+  filter(variable %in% variables_raras) %>%
+  group_by(variable, comunidad) %>%
+  summarise(n = n(), .groups = "drop")
+
+ggplot(df_burbujas, aes(x = variable, y = comunidad, size = n, fill = variable)) +
+  geom_point(alpha = 0.8, shape = 21, color = "black") +
+  geom_text(aes(label = n), color = "black", size = 3) +
+  scale_size_continuous(range = c(3, 20)) +
+  labs(title = "Presencia de tecnologías poco frecuentes por comunidad",
+       x = "Tecnología energética",
+       y = "Comunidad Autónoma",
+       size = "Nº de registros") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+```
+
+```{r}
+variables_fuera <- c("Fuel + Gas", "Carbón", "Motores diésel", "Hidroeólica", "Turbina de gas")
+
+df_balance_filtrado <- df_balance %>%
+  filter(!variable %in% variables_fuera)
+
+variables_finales <- df_balance_filtrado %>%
+  distinct(variable) %>%
+  arrange(variable)
+
+print(variables_finales)
+```
+
+### CRUCE CON AEMET
+
+```{r}
+ruta_json <- "data/clima_valencia.json"
+datos_brutos <- fromJSON(ruta_json)
+df_aemet <- as.data.frame(datos_brutos, stringsAsFactors = FALSE)
+
+df_aemet <- df_aemet %>%
+  mutate(fecha = as.Date(paste0(fecha, "-01"))) %>%
+  arrange(fecha)
+
+limpiar_valor <- function(x) {
+  as.numeric(str_extract(x, "^[0-9.]+"))
+}
+columnas_a_limpiar <- setdiff(names(df_aemet), c("fecha", "indicativo"))
+df_aemet[columnas_a_limpiar] <- lapply(df_aemet[columnas_a_limpiar], limpiar_valor)
+
+write.csv(df_aemet, "data/aemet/clima_valencia_2025.csv", row.names = FALSE)
+```
+
+```{r}
+df_2023 <- read_csv("data/aemet/clima_valencia_2023.csv", show_col_types = FALSE)
+df_2024 <- read_csv("data/aemet/clima_valencia_2024.csv", show_col_types = FALSE)
+
+# unimos data sets
+df_clima_valencia <- bind_rows(df_2023, df_2024) %>%
+  arrange(fecha)
+
+# guardamos
+write_csv(df_clima_valencia, "data/aemet/clima_valencia.csv")
+```
+
+```{r}
+df_clima <- read_csv("data/aemet/clima_valencia.csv", show_col_types = FALSE)
+head(df_clima)
+```
+
+```{r}
+cat("Número total de variables:", ncol(df_clima), "\n")
+names(df_clima)
+
+df_clima %>%
+  summarise_all(~ sum(is.na(.))) %>%
+  pivot_longer(cols = everything(), names_to = "variable", values_to = "n_nulos") %>%
+  arrange(desc(n_nulos)) %>%
+  kable(col.names = c("Variable", "Nº de nulos"))
+
+```
+
+### Visualizaciones para algunas variables:
+
+```{r}
+ggplot(df_clima, aes(x = as.Date(fecha), y = tm_mes)) +
+  geom_line(color = "tomato", linewidth = 1) +
+  geom_point(color = "black", size = 2) +
+  labs(title = "Temperatura media mensual en Valencia",
+       x = "Fecha", y = "Temperatura media (°C)") +
+  theme_minimal()
+
+```
+
+```{r}
+df_clima %>%
+  pivot_longer(cols = c(tm_max, tm_min), names_to = "tipo", values_to = "valor") %>%
+  ggplot(aes(x = as.Date(fecha), y = valor, color = tipo)) +
+  geom_line(linewidth = 1.2) +
+  labs(title = "Temperatura máxima y mínima mensual",
+       x = "Fecha", y = "Temperatura (°C)", color = "Tipo") +
+  theme_minimal()
+
+```
+
+```{r}
+ggplot(df_clima, aes(x = as.Date(fecha), y = inso)) +
+  geom_col(fill = "goldenrod") +
+  labs(title = "Horas de sol mensual (inso)",
+       x = "Fecha", y = "Horas de sol") +
+  theme_minimal()
+
+```
+
+```{r}
+df_clima %>%
+  mutate(año = format(as.Date(fecha), "%Y")) %>%
+  group_by(año) %>%
+  summarise(
+    temp_media = mean(tm_mes, na.rm = TRUE),
+    temp_max = mean(tm_max, na.rm = TRUE),
+    temp_min = mean(tm_min, na.rm = TRUE),
+    insolacion = mean(inso, na.rm = TRUE),
+    precipitacion = sum(p_mes, na.rm = TRUE)
+  ) %>%
+  kable(col.names = c("Año", "Temp. media", "Temp. máx", "Temp. mín", "Insolación media", "Prec. total (mm)"))
+
+```
+
+### Cruce de datos generación-meteorología
+
+```{r}
+library(readr)
+library(dplyr)
+
+df_generacion <- read_csv("data/generation/generacion_comunidadvalenciana_limpio.csv")
+df_clima <- read_csv("data/aemet/clima_valencia.csv")
+
+tecnologias_fuera <- c("Fuel + Gas", "Carbón", "Motores diésel", "Hidroeólica", "Turbina de gas", "Turbina de vapor")
+
+df_generacion_filtrado <- df_generacion %>%
+  filter(!variable %in% tecnologias_fuera) %>%
+  select(-comunidad)
+
+df_generacion_filtrado$fecha <- as.Date(df_generacion_filtrado$fecha)
+df_clima$fecha <- as.Date(df_clima$fecha)
+
+df_valencia_completo <- df_generacion_filtrado %>%
+  left_join(df_clima, by = "fecha")
+
+head(df_valencia_completo, 15)
+
+```
+
+```{r}
+write_csv(df_valencia_completo, "data/aemet/datasetvalencia.csv")
+```
