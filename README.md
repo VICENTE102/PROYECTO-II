@@ -119,3 +119,23 @@ Los scripts están compilados en HTML como anexos (`docs/`) para facilitar su co
 ## 📜 Licencia
 
 Este proyecto es exclusivamente académico y no está destinado a uso comercial. Todas las fuentes utilizadas son públicas y oficiales.
+
+---
+
+## 🔄 Acceso y colaboración
+
+Como se decia anteriormente, este repositorio es público y está pensado para que cualquier persona interesada en el análisis de datos, energías renovables o aprendizaje de R pueda consultarlo, reutilizarlo o proponer mejoras.
+
+Se aceptan sugerencias, aportaciones o correcciones mediante Pull Requests o Issues. El código está documentado para facilitar su comprensión y reutilización.
+
+- Clonación del repositorio_
+
+Puedes clonar este repositorio en tu máquina local para explorar su estructura o trabajar sobre él.
+
+#### Usando SSH (recomendado si ya tienes clave configurada):
+
+```bash
+git clone git@github.com:VICENTE102/PROYECTO-II.git
+cd PROYECTO-II
+
+
