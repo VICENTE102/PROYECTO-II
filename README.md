@@ -11,6 +11,9 @@ Este repositorio contiene el desarrollo completo del proyecto realizado en la as
 - Pablo Alpuente Tabasco
 - Vicente Ricós Caras
 - José Miguel García Ríos
+  
+# Tutora de la Asignatura 
+- 	Ramírez Quintana, María José
 
 ## 🧭 Estructura del repositorio
 
