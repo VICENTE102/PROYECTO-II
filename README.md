@@ -95,6 +95,30 @@ Todos los scripts se encuentran ordenados por carpeta. Puedes reproducir los an�
 La memoria final y todos los anexos generados en RMarkdown compilado a HTML están en la carpeta `docs/`. El índice de anexos está también disponible en `docs/index_anexos.md`.
 
 ---
+## 📥 Descarga y visualización de archivos HTML
+
+Algunos archivos `.html` generados durante el proyecto (por ejemplo, visualizaciones interactivas con Plotly) pueden superar el tamaño permitido por GitHub para su vista previa directa. En estos casos, aparecerá un mensaje como:
+
+> “Sorry about that, but we can’t show files that are this big right now.”
+
+### ✅ ¿Cómo descargarlos correctamente?
+
+1. Haz clic en el archivo `.html` que quieres visualizar desde la carpeta `/docs/`.
+2. Pulsa el botón **"Raw"** (en la parte superior derecha).
+3. El navegador abrirá el archivo. Haz clic derecho y selecciona **"Guardar como..."** para descargarlo.
+4. Una vez descargado, **abre el archivo en tu navegador web** (doble clic o clic derecho → "Abrir con").
+
+> También puedes pulsar el ícono de descarga directa (⬇️) que aparece junto al botón "Raw".
+
+### 🧩 Requisitos
+
+Los archivos `.html` están preparados para abrirse de forma autónoma (sin necesidad de servidor), siempre que no dependan de recursos externos no incluidos.
+
+---
+
+Si tienes cualquier problema visualizándolos, puedes contactarnos o abrir el archivo directamente desde RStudio con `viewer::browseURL("nombre_archivo.html")`.
+
+---
 
 ## 👩‍🏫 Evaluación técnica
 
